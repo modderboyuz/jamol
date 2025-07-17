@@ -31,6 +31,10 @@ export const users = pgTable("users", {
   description: text("description"),
   average_pay: integer("average_pay"),
   address: text("address"),
+  delivery_address: text("delivery_address"),
+  delivery_latitude: decimal("delivery_latitude", { precision: 10, scale: 8 }),
+  delivery_longitude: decimal("delivery_longitude", { precision: 11, scale: 8 }),
+  email: text("email"),
   
   // Legacy fields - keeping for compatibility
   passport_series: text("passport_series"),
@@ -67,6 +71,8 @@ export const products = pgTable("products", {
   is_available: boolean("is_available").default(true),
   is_rental: boolean("is_rental").default(false),
   unit: text("unit").default("dona"),
+  delivery_price: decimal("delivery_price", { precision: 12, scale: 2 }).default("0").notNull(),
+  free_delivery_threshold: decimal("free_delivery_threshold", { precision: 12, scale: 2 }).default("0").notNull(),
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -75,10 +81,14 @@ export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
   user_id: uuid("user_id").references(() => users.id),
   total_amount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
+  delivery_amount: decimal("delivery_amount", { precision: 12, scale: 2 }).default("0").notNull(),
   status: text("status", { enum: ["pending", "confirmed", "processing", "completed", "cancelled"] }).default("pending").notNull(),
   delivery_address: text("delivery_address"),
+  delivery_latitude: decimal("delivery_latitude", { precision: 10, scale: 8 }),
+  delivery_longitude: decimal("delivery_longitude", { precision: 11, scale: 8 }),
   delivery_date: timestamp("delivery_date"),
   notes: text("notes"),
+  is_delivery: boolean("is_delivery").default(false),
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -113,6 +123,36 @@ export const cart_items = pgTable("cart_items", {
   product_id: uuid("product_id").references(() => products.id, { onDelete: "cascade" }).notNull(),
   quantity: integer("quantity").default(1).notNull(),
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const company_settings = pgTable("company_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  is_delivery: boolean("is_delivery").default(false).notNull(),
+  company_name: text("company_name").default("MetalBaza").notNull(),
+  company_address: text("company_address"),
+  company_phone: text("company_phone"),
+  company_email: text("company_email"),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const worker_applications = pgTable("worker_applications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  client_id: uuid("client_id").references(() => users.id).notNull(),
+  worker_id: uuid("worker_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  location: text("location"),
+  location_latitude: decimal("location_latitude", { precision: 10, scale: 8 }),
+  location_longitude: decimal("location_longitude", { precision: 11, scale: 8 }),
+  budget: decimal("budget", { precision: 12, scale: 2 }),
+  status: text("status", { enum: ["pending", "accepted", "rejected", "completed", "cancelled"] }).default("pending").notNull(),
+  urgency: text("urgency", { enum: ["low", "medium", "high"] }).default("medium").notNull(),
+  contact_phone: text("contact_phone"),
+  preferred_date: timestamp("preferred_date"),
+  notes: text("notes"),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 // Insert schemas
@@ -159,6 +199,18 @@ export const insertCartItemSchema = createInsertSchema(cart_items).omit({
   created_at: true,
 });
 
+export const insertCompanySettingsSchema = createInsertSchema(company_settings).omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+});
+
+export const insertWorkerApplicationSchema = createInsertSchema(worker_applications).omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type Category = typeof categories.$inferSelect;
@@ -168,6 +220,8 @@ export type OrderItem = typeof order_items.$inferSelect;
 export type Ad = typeof ads.$inferSelect;
 export type WorkType = typeof workTypes.$inferSelect;
 export type CartItem = typeof cart_items.$inferSelect;
+export type CompanySettings = typeof company_settings.$inferSelect;
+export type WorkerApplication = typeof worker_applications.$inferSelect;
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -182,3 +236,7 @@ export type OrderItem = typeof order_items.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type Ad = typeof ads.$inferSelect;
 export type InsertAd = z.infer<typeof insertAdSchema>;
+export type CompanySettings = typeof company_settings.$inferSelect;
+export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
+export type WorkerApplication = typeof worker_applications.$inferSelect;
+export type InsertWorkerApplication = z.infer<typeof insertWorkerApplicationSchema>;

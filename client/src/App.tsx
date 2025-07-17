@@ -18,6 +18,8 @@ import Orders from "@/pages/orders";
 import Profile from "@/pages/profile";
 import Admin from "@/pages/admin";
 import AdminHome from "@/pages/admin-home";
+import Checkout from "@/pages/checkout";
+import WorkerApplications from "@/pages/worker-applications";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -26,7 +28,7 @@ function Router() {
   const [location, navigate] = useLocation();
 
   const handleCartOrder = () => {
-    navigate("/orders");
+    navigate("/checkout");
   };
 
   return (
@@ -38,7 +40,9 @@ function Router() {
           <Route path="/catalog" component={user?.role === 'admin' ? AdminHome : Catalog} />
           <Route path="/workers" component={user?.role === 'admin' ? AdminHome : Workers} />
           <Route path="/orders" component={user?.role === 'admin' ? AdminHome : Orders} />
+          <Route path="/worker-applications" component={user?.role === 'worker' ? WorkerApplications : NotFound} />
           <Route path="/profile" component={user?.role === 'admin' ? AdminHome : Profile} />
+          <Route path="/checkout" component={user?.role === 'admin' ? AdminHome : Checkout} />
           <Route path="/admin" component={Admin} />
           <Route component={NotFound} />
         </Switch>

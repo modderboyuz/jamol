@@ -55,12 +55,19 @@ export function ProductDetailModal({
   React.useEffect(() => {
     if (isOpen) {
       hide();
-      setShowFullDetails(false); // Reset to compact view when opening
-      setQuantity(1); // Reset quantity
+      // Don't reset state when opening - only reset when product changes
     } else {
       show();
     }
   }, [isOpen, hide, show]);
+
+  // Reset state only when product changes
+  React.useEffect(() => {
+    if (product) {
+      setShowFullDetails(false);
+      setQuantity(1);
+    }
+  }, [product?.id]);
 
   if (!product) return null;
 
@@ -89,6 +96,10 @@ export function ProductDetailModal({
       });
       
       if (response.ok) {
+        // Invalidate cart query to refresh cart bar
+        import('@/lib/query-client').then(({ queryClient }) => {
+          queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+        });
         onAddToCart(product.id, quantity);
         onClose(); // Close modal after successful add
       } else {

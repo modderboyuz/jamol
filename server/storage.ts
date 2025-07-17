@@ -8,6 +8,8 @@ import {
   order_items, 
   ads,
   cart_items,
+  company_settings,
+  worker_applications,
   type User, 
   type InsertUser, 
   type Category, 
@@ -21,6 +23,10 @@ import {
   type Ad, 
   type InsertAd,
   type CartItem,
+  type CompanySettings,
+  type InsertCompanySettings,
+  type WorkerApplication,
+  type InsertWorkerApplication,
   insertCartItemSchema
 } from "@shared/schema";
 
@@ -70,6 +76,17 @@ export interface IStorage {
   createAd(ad: InsertAd): Promise<Ad>;
   updateAd(id: string, ad: Partial<InsertAd>): Promise<Ad>;
   deleteAd(id: string): Promise<void>;
+  
+  // Company Settings
+  getCompanySettings(): Promise<CompanySettings | undefined>;
+  updateCompanySettings(settings: Partial<InsertCompanySettings>): Promise<CompanySettings>;
+  
+  // Worker Applications
+  getWorkerApplications(workerId: string): Promise<WorkerApplication[]>;
+  getClientApplications(clientId: string): Promise<WorkerApplication[]>;
+  createWorkerApplication(application: InsertWorkerApplication): Promise<WorkerApplication>;
+  updateWorkerApplication(id: string, application: Partial<InsertWorkerApplication>): Promise<WorkerApplication>;
+  deleteWorkerApplication(id: string): Promise<void>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -325,6 +342,61 @@ export class DrizzleStorage implements IStorage {
 
   async clearCart(userId: string): Promise<void> {
     await db.delete(cart_items).where(eq(cart_items.user_id, userId));
+  }
+
+  // Company Settings
+  async getCompanySettings(): Promise<CompanySettings | undefined> {
+    const result = await db.select().from(company_settings).limit(1);
+    return result[0];
+  }
+
+  async updateCompanySettings(settings: Partial<InsertCompanySettings>): Promise<CompanySettings> {
+    const existing = await this.getCompanySettings();
+    if (existing) {
+      const result = await db.update(company_settings)
+        .set(settings)
+        .where(eq(company_settings.id, existing.id))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(company_settings).values(settings).returning();
+      return result[0];
+    }
+  }
+
+  // Worker Applications
+  async getWorkerApplications(workerId: string): Promise<WorkerApplication[]> {
+    try {
+      return await db.select().from(worker_applications)
+        .where(eq(worker_applications.worker_id, workerId))
+        .orderBy(desc(worker_applications.created_at));
+    } catch (error) {
+      console.error('Error getting worker applications:', error);
+      return [];
+    }
+  }
+
+  async getClientApplications(clientId: string): Promise<WorkerApplication[]> {
+    return await db.select().from(worker_applications)
+      .where(eq(worker_applications.client_id, clientId))
+      .orderBy(desc(worker_applications.created_at));
+  }
+
+  async createWorkerApplication(application: InsertWorkerApplication): Promise<WorkerApplication> {
+    const result = await db.insert(worker_applications).values(application).returning();
+    return result[0];
+  }
+
+  async updateWorkerApplication(id: string, application: Partial<InsertWorkerApplication>): Promise<WorkerApplication> {
+    const result = await db.update(worker_applications)
+      .set(application)
+      .where(eq(worker_applications.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteWorkerApplication(id: string): Promise<void> {
+    await db.delete(worker_applications).where(eq(worker_applications.id, id));
   }
 }
 

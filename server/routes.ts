@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./supabase-storage";
+import { storage } from "./storage";
+import { insertOrderSchema, insertAdSchema, insertWorkerApplicationSchema } from "@shared/schema";
 
 interface AuthRequest extends Request {
   telegramId?: string;
@@ -360,6 +361,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error clearing cart:", error);
       res.status(500).json({ error: "Savatni tozalashda xatolik" });
+    }
+  });
+
+  // Company settings
+  app.get("/api/company-settings", async (req, res) => {
+    try {
+      const settings = await storage.getCompanySettings();
+      res.json(settings || { is_delivery: false });
+    } catch (error) {
+      console.error("Error getting company settings:", error);
+      res.status(500).json({ error: "Kompaniya sozlamalarini olishda xatolik" });
+    }
+  });
+
+  app.put("/api/company-settings", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const settings = await storage.updateCompanySettings(req.body);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating company settings:", error);
+      res.status(500).json({ error: "Kompaniya sozlamalarini yangilashda xatolik" });
+    }
+  });
+
+  // Worker Applications routes
+  app.get("/api/worker-applications", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const user = await storage.getUserByTelegramId(Number(req.telegramId));
+      if (!user) {
+        return res.status(404).json({ error: "Foydalanuvchi topilmadi" });
+      }
+
+      if (user.role !== 'worker') {
+        return res.status(403).json({ error: "Faqat ustalar uchun" });
+      }
+
+      const applications = await storage.getWorkerApplications(user.id);
+      res.json(applications);
+    } catch (error) {
+      console.error("Error getting worker applications:", error);
+      res.status(500).json({ error: "Arizalarni olishda xatolik" });
+    }
+  });
+
+  app.post("/api/worker-applications", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const user = await storage.getUserByTelegramId(Number(req.telegramId));
+      if (!user) {
+        return res.status(404).json({ error: "Foydalanuvchi topilmadi" });
+      }
+
+      const applicationData = insertWorkerApplicationSchema.parse({
+        ...req.body,
+        client_id: user.id,
+      });
+      
+      const application = await storage.createWorkerApplication(applicationData);
+      res.json(application);
+    } catch (error) {
+      console.error("Error creating worker application:", error);
+      res.status(400).json({ error: "Ariza yaratishda xatolik" });
+    }
+  });
+
+  app.put("/api/worker-applications/:id", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const user = await storage.getUserByTelegramId(Number(req.telegramId));
+      if (!user) {
+        return res.status(404).json({ error: "Foydalanuvchi topilmadi" });
+      }
+
+      const { id } = req.params;
+      const application = await storage.updateWorkerApplication(id, req.body);
+      res.json(application);
+    } catch (error) {
+      console.error("Error updating worker application:", error);
+      res.status(400).json({ error: "Arizani yangilashda xatolik" });
     }
   });
 
