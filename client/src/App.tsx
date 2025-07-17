@@ -5,7 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { AuthProvider } from "@/hooks/use-auth.tsx";
+import { useBottomNav } from "@/hooks/use-bottom-nav";
 import { Navigation } from "@/components/layout/navigation";
+import { BottomNavigation } from "@/components/layout/bottom-navigation";
 import Home from "@/pages/home";
 import Catalog from "@/pages/catalog";
 import Orders from "@/pages/orders";
@@ -14,10 +16,12 @@ import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
+  const { isVisible } = useBottomNav();
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navigation />
-      <main>
+      <main className="pb-20 md:pb-0">
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/catalog" component={Catalog} />
@@ -27,6 +31,7 @@ function Router() {
           <Route component={NotFound} />
         </Switch>
       </main>
+      {isVisible && <BottomNavigation />}
     </div>
   );
 }

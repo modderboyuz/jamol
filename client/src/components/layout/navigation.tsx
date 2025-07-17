@@ -20,8 +20,10 @@ import {
   Home,
   Grid3X3,
   ClipboardList,
-  Phone
+  Phone,
+  Search
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth.tsx";
 
 const navigationItems = [
@@ -35,6 +37,16 @@ export function Navigation() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // Navigate to home page with search query
+      window.location.href = `/?search=${encodeURIComponent(searchQuery)}`;
+    }
+  };
 
   const NavItems = ({ mobile = false }) => (
     <>
@@ -64,8 +76,8 @@ export function Navigation() {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="flex justify-between items-center h-14">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/">
             <div className="flex items-center space-x-2">
@@ -75,6 +87,20 @@ export function Navigation() {
               </span>
             </div>
           </Link>
+
+          {/* Search Bar - iOS Style */}
+          <div className="flex-1 max-w-md mx-4">
+            <form onSubmit={handleSearch} className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Qidirish..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 bg-gray-100 border-none rounded-full h-9 text-sm placeholder:text-gray-500 focus:bg-white focus:ring-2 focus:ring-black/10 transition-all"
+              />
+            </form>
+          </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-2">

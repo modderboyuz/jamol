@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { authService, type AuthUser } from "@/lib/auth";
+import { useTelegram } from "@/hooks/use-telegram";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -13,12 +14,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { user: telegramUser, isTelegramWebApp, isReady } = useTelegram();
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const currentUser = await authService.getCurrentUser();
-        setUser(currentUser);
+        // Check if user is coming from Telegram Web App
+        if (isTelegramWebApp && isReady && telegramUser && !user) {
+          // Auto-login with Telegram user data
+          const authUser: AuthUser = {
+            id: telegramUser.id.toString(),
+            phone: `tg_${telegramUser.id}`,
+            first_name: telegramUser.first_name,
+            last_name: telegramUser.last_name || '',
+            telegram_username: telegramUser.username,
+            telegram_id: telegramUser.id,
+            role: 'client',
+            type: 'telegram'
+          };
+          
+          login(authUser);
+          console.log('Auto-logged in via Telegram Web App:', telegramUser);
+        } else {
+          // Regular auth check
+          const currentUser = await authService.getCurrentUser();
+          setUser(currentUser);
+        }
       } catch (error) {
         console.error('Auth check failed:', error);
       } finally {
@@ -26,8 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    checkAuth();
-  }, []);
+    if (isTelegramWebApp && isReady) {
+      checkAuth();
+    } else if (!isTelegramWebApp) {
+      checkAuth();
+    }
+  }, [isTelegramWebApp, isReady, telegramUser]);
 
   const login = (userData: AuthUser) => {
     setUser(userData);

@@ -1,7 +1,7 @@
 import { Bot, webhookCallback } from "grammy";
 import { conversations, createConversation } from "@grammyjs/conversations";
 import { Router } from "express";
-import { storage } from "./storage";
+import { storage } from "./supabase-storage";
 import type { insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -89,46 +89,50 @@ bot.use(createConversation(registration));
 
 // Commands
 bot.command("start", async (ctx) => {
-  const user = await storage.getUserByTelegramId(ctx.from?.id);
+  let user = await storage.getUserByTelegramId(ctx.from?.id);
   
-  if (user) {
-    await ctx.reply(
-      `Salom ${user.first_name}! 👋\n\n` +
-      `MetalBaza web ilovasiga xush kelibsiz.\n` +
-      `Katalogni ko'rish uchun pastdagi tugmani bosing.`,
-      {
-        reply_markup: {
-          inline_keyboard: [[
-            { text: "🌐 Web Ilova", url: process.env.REPLIT_DOMAINS?.split(',')[0] || "https://localhost:5000" }
-          ]]
-        }
-      }
-    );
-  } else {
-    await ctx.reply(
-      "MetalBaza ga xush kelibsiz! 🏗️\n\n" +
-      "Qurilish materiallari va metallarga ixtisoslashgan onlayn do'kon.\n\n" +
-      "Ro'yxatdan o'tish uchun /register ni bosing."
-    );
-  }
-});
+  if (!user) {
+    // Auto-register new users
+    try {
+      const userData = {
+        phone: `tg_${ctx.from?.id}`,
+        first_name: ctx.from?.first_name || "User",
+        last_name: ctx.from?.last_name || "",
+        telegram_username: ctx.from?.username,
+        telegram_id: ctx.from?.id,
+        role: 'client' as const,
+        type: 'telegram' as const
+      };
 
-bot.command("register", async (ctx) => {
-  const user = await storage.getUserByTelegramId(ctx.from?.id);
-  
-  if (user) {
-    await ctx.reply("Siz allaqachon ro'yxatdan o'tgansiz! ✅");
-    return;
+      user = await storage.createUser(userData);
+    } catch (error) {
+      console.error('Auto-registration error:', error);
+    }
   }
-  
-  await ctx.conversation.enter("registration");
+
+  await ctx.reply(
+    `Salom ${user?.first_name || ctx.from?.first_name}! 👋\n\n` +
+    `MetalBaza - qurilish materiallari va jihozlari\n\n` +
+    `Katalogni ko'rish uchun pastdagi tugmani bosing.`,
+    {
+      reply_markup: {
+        inline_keyboard: [[
+          { 
+            text: "🛒 Katalog", 
+            web_app: { 
+              url: `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}` || "https://localhost:5000" 
+            }
+          }
+        ]]
+      }
+    }
+  );
 });
 
 bot.command("help", async (ctx) => {
   await ctx.reply(
     "MetalBaza Bot Yordam 📋\n\n" +
-    "/start - Botni ishga tushirish\n" +
-    "/register - Ro'yxatdan o'tish\n" +
+    "/start - Katalogni ochish\n" +
     "/profile - Profil ma'lumotlari\n" +
     "/help - Yordam"
   );
@@ -138,7 +142,7 @@ bot.command("profile", async (ctx) => {
   const user = await storage.getUserByTelegramId(ctx.from?.id);
   
   if (!user) {
-    await ctx.reply("Avval ro'yxatdan o'ting! /register");
+    await ctx.reply("Iltimos, avval /start ni bosing!");
     return;
   }
 

@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { ProductDetailModal } from "@/components/product/product-detail-modal";
+import { CategoryNav } from "@/components/layout/category-nav";
+import { ProductGrid } from "@/components/product/product-grid";
 import { 
   Search,
   Building2, 
@@ -24,25 +26,6 @@ const categoryIcons = {
   zap: Zap,
 };
 
-function SearchBar() {
-  const [searchQuery, setSearchQuery] = useState("");
-
-  return (
-    <div className="p-4 bg-white">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-        <Input
-          type="text"
-          placeholder="Mahsulotlarni qidirish..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 bg-gray-100 border-none rounded-xl h-11"
-        />
-      </div>
-    </div>
-  );
-}
-
 function Categories() {
   const { data: categories, isLoading } = useQuery({
     queryKey: ['/api/categories'],
@@ -50,37 +33,41 @@ function Categories() {
 
   if (isLoading) {
     return (
-      <div className="px-4 py-2">
-        <div className="flex space-x-3 overflow-x-auto pb-2">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="flex-shrink-0">
-              <Skeleton className="w-16 h-16 rounded-full" />
-              <Skeleton className="w-12 h-3 mt-2 mx-auto" />
-            </div>
-          ))}
+      <div className="px-4 py-2 mb-6">
+        <div className="flex justify-center">
+          <div className="flex space-x-3 overflow-x-auto pb-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex-shrink-0">
+                <Skeleton className="w-16 h-16 rounded-full" />
+                <Skeleton className="w-12 h-3 mt-2 mx-auto" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="px-4 py-2">
-      <div className="flex space-x-4 overflow-x-auto pb-2">
-        {categories?.map((category: Category) => {
-          const IconComponent = categoryIcons[category.icon as keyof typeof categoryIcons] || Package;
-          return (
-            <Link key={category.id} href={`/catalog?category=${category.id}`}>
-              <div className="flex-shrink-0 flex flex-col items-center space-y-2 cursor-pointer">
-                <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center">
-                  <IconComponent className="w-6 h-6 text-gray-600" />
+    <div className="px-4 py-4 mb-6">
+      <div className="flex justify-center">
+        <div className="flex space-x-6 overflow-x-auto pb-2 scrollbar-hide">
+          {categories?.slice(0, 6).map((category: Category) => {
+            const IconComponent = categoryIcons[category.icon as keyof typeof categoryIcons] || Package;
+            return (
+              <Link key={category.id} href={`/catalog?category=${category.id}`}>
+                <div className="flex-shrink-0 flex flex-col items-center space-y-2 cursor-pointer group">
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+                    <IconComponent className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <span className="text-xs text-gray-700 text-center w-14 truncate">
+                    {category.name_uz}
+                  </span>
                 </div>
-                <span className="text-xs text-gray-700 text-center w-16 truncate">
-                  {category.name_uz}
-                </span>
-              </div>
-            </Link>
-          );
-        })}
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -98,99 +85,177 @@ function AdBanner() {
   const ad = ads[0];
 
   return (
-    <div className="px-4 py-3">
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+    <div className="px-4 py-3 mb-6">
+      <div className="bg-black rounded-xl p-4 text-white">
         <h3 className="font-semibold text-lg mb-1">{ad.title_uz}</h3>
-        <p className="text-blue-100 text-sm">{ad.description_uz}</p>
+        <p className="text-gray-300 text-sm">{ad.description_uz}</p>
       </div>
     </div>
   );
 }
 
-function ProductList() {
+function AllProducts() {
   const { data: products, isLoading } = useQuery({
     queryKey: ['/api/products'],
   });
 
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleAddToCart = (productId: string, quantity: number) => {
+    // TODO: Implement add to cart functionality
+    console.log('Adding to cart:', { productId, quantity });
+  };
+
   if (isLoading) {
     return (
-      <div className="px-4">
-        <div className="space-y-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-4">
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <Skeleton className="h-4 w-3/4 mb-2" />
-                    <Skeleton className="h-3 w-1/2 mb-2" />
-                    <Skeleton className="h-4 w-1/4" />
-                  </div>
-                  <Skeleton className="h-8 w-16" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <Card key={i} className="overflow-hidden">
+            <div className="aspect-square bg-gray-200">
+              <Skeleton className="w-full h-full" />
+            </div>
+            <CardContent className="p-4">
+              <Skeleton className="h-4 w-3/4 mb-2" />
+              <Skeleton className="h-3 w-1/2 mb-3" />
+              <div className="flex justify-between items-center">
+                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-8 w-16" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (!products || products.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          Mahsulotlar topilmadi
+        </h3>
+        <p className="text-gray-500">
+          Hozircha bu kategoriyada mahsulotlar yo'q.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="px-4 pb-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Mahsulotlar</h2>
-        <Link href="/catalog">
-          <Button variant="ghost" size="sm" className="text-blue-600">
-            Barchasi
-          </Button>
-        </Link>
-      </div>
-      
-      <div className="space-y-3">
-        {products?.slice(0, 8).map((product: Product) => (
-          <Card key={product.id} className="bg-white">
-            <CardContent className="p-4">
-              <div className="flex justify-between items-center">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-medium text-gray-900">{product.name_uz}</h3>
-                    {product.is_rental && (
-                      <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
-                        Ijara
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600 mb-2 line-clamp-1">
-                    {product.description_uz}
-                  </p>
-                  <div className="flex items-center gap-1">
-                    <span className="font-semibold text-gray-900">
-                      {Number(product.price).toLocaleString()}
-                    </span>
-                    <span className="text-sm text-gray-500">so'm/{product.unit}</span>
-                  </div>
+    <>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+        {products.map((product: Product) => (
+          <Card 
+            key={product.id} 
+            className="group overflow-hidden hover:shadow-md transition-all duration-200 bg-white border border-gray-100 cursor-pointer"
+            onClick={() => handleProductClick(product)}
+          >
+            <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Package className="h-8 w-8 text-gray-400" />
+              </div>
+              {product.is_rental && (
+                <Badge className="absolute top-1 left-1 bg-black text-white text-xs px-1 py-0.5">
+                  Ijara
+                </Badge>
+              )}
+            </div>
+            
+            <CardContent className="p-3">
+              <h3 className="font-medium text-gray-900 mb-1 text-sm line-clamp-2 group-hover:text-black transition-colors">
+                {product.name_uz}
+              </h3>
+              
+              <p className="text-xs text-gray-600 mb-2 line-clamp-1">
+                {product.description_uz}
+              </p>
+              
+              <div className="flex flex-col space-y-2">
+                <div className="flex flex-col">
+                  <span className="font-bold text-sm text-gray-900">
+                    {Number(product.price).toLocaleString()}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    so'm/{product.unit}
+                  </span>
                 </div>
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <ShoppingCart className="w-4 h-4" />
+                
+                <Button 
+                  size="sm" 
+                  className="bg-black hover:bg-gray-800 text-white w-full h-7 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToCart(product.id, 1);
+                  }}
+                >
+                  <ShoppingCart className="h-3 w-3 mr-1" />
+                  Qo'shish
                 </Button>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
-    </div>
+
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onAddToCart={handleAddToCart}
+      />
+    </>
   );
 }
 
-
-
 export default function Home() {
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [location] = useLocation();
+
+  // Get search query from URL params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryParam = urlParams.get('category');
+    const searchParam = urlParams.get('search');
+    
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+    
+    if (searchParam) {
+      setSearchQuery(searchParam);
+    }
+  }, [location]);
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <SearchBar />
-      <Categories />
-      <AdBanner />
-      <ProductList />
+      <CategoryNav 
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+      />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <AdBanner />
+        
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {searchQuery ? `"${searchQuery}" qidiruv natijalari` :
+             selectedCategory ? 'Katalog' : 'Barcha mahsulotlar'}
+          </h1>
+          <p className="text-gray-600">
+            Qurilish materiallari va jihozlari
+          </p>
+        </div>
+        
+        <ProductGrid categoryId={selectedCategory} searchQuery={searchQuery} />
+      </div>
     </div>
   );
 }

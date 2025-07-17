@@ -53,7 +53,7 @@ export function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps) {
           <Button
             onClick={handleTelegramLogin}
             disabled={isLoading}
-            className="w-full flex items-center justify-center space-x-3 bg-brand-600 hover:bg-brand-700 text-white py-3 rounded-xl"
+            className="w-full flex items-center justify-center space-x-3 bg-black hover:bg-gray-800 text-white py-3 rounded-xl"
           >
             <MessageCircle className="w-5 h-5" />
             <span>Telegram orqali kirish</span>
