@@ -1,7 +1,17 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./supabase-storage";
-import { insertOrderSchema, insertAdSchema, insertWorkerApplicationSchema } from "@shared/schema";
+import { supabase } from "./db";
+import crypto from "crypto";
+import { 
+  insertOrderSchema, 
+  insertAdSchema, 
+  insertWorkerApplicationSchema,
+  insertWorkerReviewSchema,
+  insertCategorySchema,
+  insertProductSchema,
+  insertOrderItemSchema
+} from "@shared/schema";
 
 interface AuthRequest extends Request {
   telegramId?: string;
@@ -71,6 +81,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(categories);
     } catch (error) {
       res.status(500).json({ error: "Kategoriyalarni olishda xatolik" });
+    }
+  });
+
+  app.get("/api/categories/:parentId/subcategories", async (req, res) => {
+    try {
+      const { parentId } = req.params;
+      const subcategories = await storage.getSubcategories(parentId);
+      res.json(subcategories);
+    } catch (error) {
+      console.error("Error getting subcategories:", error);
+      res.status(500).json({ error: "Subkategoriyalarni olishda xatolik" });
     }
   });
 
@@ -185,13 +206,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Foydalanuvchi topilmadi" });
       }
 
-      const orderData = insertOrderSchema.parse({
-        ...req.body,
+      // Validate required fields
+      const { items, customer_name, customer_phone, ...orderData } = req.body;
+      
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: "Buyurtmada mahsulotlar bo'lishi kerak" });
+      }
+
+      // Calculate total amount
+      let totalAmount = 0;
+      for (const item of items) {
+        const product = await storage.getProduct(item.productId);
+        if (!product) {
+          return res.status(400).json({ error: `Mahsulot topilmadi: ${item.productId}` });
+        }
+        totalAmount += Number(product.price) * item.quantity;
+      }
+
+      const completeOrderData = insertOrderSchema.parse({
+        ...orderData,
         user_id: user.id,
+        customer_name: customer_name || `${user.first_name} ${user.last_name}`,
+        customer_phone: customer_phone || user.phone,
+        total_amount: totalAmount.toString(),
       });
-      const order = await storage.createOrder(orderData);
+
+      const order = await storage.createOrder(completeOrderData);
+
+      // Create order items
+      for (const item of items) {
+        const product = await storage.getProduct(item.productId);
+        if (product) {
+          await storage.createOrderItem({
+            order_id: order.id,
+            product_id: item.productId,
+            quantity: item.quantity,
+            price_per_unit: product.price,
+            total_price: (Number(product.price) * item.quantity).toString(),
+          });
+        }
+      }
+
+      // Clear cart after successful order
+      await storage.clearCart(user.id);
+      
       res.json(order);
     } catch (error) {
+      console.error("Order creation error:", error);
       res.status(400).json({ error: "Buyurtma berishda xatolik" });
     }
   });
@@ -220,37 +281,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/workers", async (req: AuthRequest, res: Response) => {
     try {
       const { search } = req.query;
-      const workers = await storage.getWorkers(search as string);
       
-      // Check if user is admin to show sensitive data
-      let isAdmin = false;
-      if (req.telegramId) {
-        const user = await storage.getUserByTelegramId(Number(req.telegramId));
-        isAdmin = user?.role === 'admin';
+      // Get workers with reviews from supabase directly
+      const { data, error } = await supabase
+        .from('users')
+        .select(`
+          *,
+          reviews:worker_reviews(rating, comment, created_at)
+        `)
+        .eq('role', 'worker')
+        .eq('is_available', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
       }
-      
-      // Filter sensitive data for non-admin users
-      const filteredWorkers = workers.map(worker => {
-        if (isAdmin) {
-          return worker; // Show all data for admin
-        } else {
-          // Hide sensitive data for non-admin users
-          return {
-            id: worker.id,
-            first_name: worker.first_name,
-            last_name: worker.last_name,
-            telegram_username: worker.telegram_username,
-            role: worker.role,
-            specialization: worker.specialization,
-            experience_years: worker.experience_years,
-            hourly_rate: worker.hourly_rate,
-            created_at: worker.created_at
-            // Hide: phone, passport_series, passport_number, passport_issued_by, passport_issued_date, address
-          };
-        }
-      });
-      
-      res.json(filteredWorkers);
+
+      // Calculate average rating and total reviews for each worker
+      const workersWithStats = data?.map(worker => {
+        const reviews = worker.reviews || [];
+        const totalReviews = reviews.length;
+        const averageRating = totalReviews > 0 
+          ? reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / totalReviews 
+          : 0;
+
+        // Check if user is admin to show sensitive data
+        let isAdmin = false;
+        // Hide sensitive data for non-admin users by default
+        return {
+          id: worker.id,
+          first_name: worker.first_name,
+          last_name: worker.last_name,
+          telegram_username: worker.telegram_username,
+          role: worker.role,
+          specialization: worker.specialization,
+          experience_years: worker.experience_years,
+          hourly_rate: worker.hourly_rate,
+          description: worker.description,
+          is_available: worker.is_available,
+          phone: worker.phone, // Show phone for contact
+          created_at: worker.created_at,
+          totalReviews,
+          averageRating,
+          reviews: reviews
+        };
+      }) || [];
+
+      res.json(workersWithStats);
     } catch (error) {
       console.error("Workers API error:", error);
       res.status(500).json({ error: "Ustalarni olishda xatolik" });
@@ -385,6 +463,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes
+  app.get("/api/admin/stats", requireAuth, requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { data: usersData } = await supabase.from('users').select('id');
+      const { data: productsData } = await supabase.from('products').select('id');
+      const { data: ordersData } = await supabase.from('orders').select('total_amount');
+      
+      const totalRevenue = ordersData?.reduce((sum, order) => sum + Number(order.total_amount), 0) || 0;
+      
+      const stats = {
+        totalUsers: usersData?.length || 0,
+        totalProducts: productsData?.length || 0,
+        totalOrders: ordersData?.length || 0,
+        totalRevenue
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("Error getting admin stats:", error);
+      res.status(500).json({ error: "Statistikani olishda xatolik" });
+    }
+  });
+
+  app.get("/api/admin/orders", requireAuth, requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items(product_id, quantity, price, products(name_uz))
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const ordersWithItems = data?.map(order => ({
+        ...order,
+        items: order.order_items?.map((item: any) => ({
+          product_name: item.products?.name_uz || 'Noma\'lum mahsulot',
+          quantity: item.quantity,
+          price: item.price
+        })) || []
+      })) || [];
+
+      res.json(ordersWithItems);
+    } catch (error) {
+      console.error("Error getting admin orders:", error);
+      res.status(500).json({ error: "Buyurtmalarni olishda xatolik" });
+    }
+  });
+
+  app.get("/api/admin/users", requireAuth, requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      res.json(data || []);
+    } catch (error) {
+      console.error("Error getting admin users:", error);
+      res.status(500).json({ error: "Foydalanuvchilarni olishda xatolik" });
+    }
+  });
+
   // Worker Applications routes
   app.get("/api/worker-applications", requireAuth, async (req: AuthRequest, res: Response) => {
     try {
@@ -422,6 +566,247 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating worker application:", error);
       res.status(400).json({ error: "Ariza yaratishda xatolik" });
+    }
+  });
+
+  // Worker reviews routes
+  app.get("/api/workers/:workerId/reviews", async (req: Request, res: Response) => {
+    try {
+      const { workerId } = req.params;
+      const reviews = await storage.getWorkerReviews(workerId);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error getting worker reviews:", error);
+      res.status(500).json({ error: "Usta sharhlarini olishda xatolik" });
+    }
+  });
+
+  app.post("/api/workers/:workerId/reviews", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const user = await storage.getUserByTelegramId(Number(req.telegramId));
+      if (!user) {
+        return res.status(404).json({ error: "Foydalanuvchi topilmadi" });
+      }
+
+      const { workerId } = req.params;
+      const reviewData = insertWorkerReviewSchema.parse({
+        ...req.body,
+        worker_id: workerId,
+        client_id: user.id,
+      });
+
+      const review = await storage.createWorkerReview(reviewData);
+      res.json(review);
+    } catch (error) {
+      console.error("Error creating worker review:", error);
+      res.status(400).json({ error: "Sharh yaratishda xatolik" });
+    }
+  });
+
+  // Admin routes for full data management
+  app.get("/api/admin/categories", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { data, error } = await supabase.from('categories').select('*').order('order_index');
+      if (error) throw error;
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: "Kategoriyalarni olishda xatolik" });
+    }
+  });
+
+  app.get("/api/admin/products", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`*, category:categories(name_uz)`)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: "Mahsulotlarni olishda xatolik" });
+    }
+  });
+
+  app.get("/api/admin/orders", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          user:users(first_name, last_name, phone),
+          order_items(*, product:products(name_uz, price))
+        `)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: "Buyurtmalarni olishda xatolik" });
+    }
+  });
+
+  app.get("/api/admin/users", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: "Foydalanuvchilarni olishda xatolik" });
+    }
+  });
+
+  app.get("/api/admin/ads", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('ads')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: "Reklamalarni olishda xatolik" });
+    }
+  });
+
+  // ModderSheets - separate order management system
+  app.get("/api/moddersheets", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          customer_name,
+          customer_phone,
+          total_amount,
+          delivery_amount,
+          status,
+          delivery_address,
+          delivery_date,
+          notes,
+          is_delivery,
+          created_at,
+          updated_at,
+          user:users(first_name, last_name, phone, telegram_username),
+          order_items(
+            id,
+            quantity,
+            price_per_unit,
+            total_price,
+            product:products(id, name_uz, name_ru, unit)
+          )
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      res.json(data);
+    } catch (error) {
+      console.error("ModderSheets error:", error);
+      res.status(500).json({ error: "ModderSheets ma'lumotlarini olishda xatolik" });
+    }
+  });
+
+  // Update order status in ModderSheets
+  app.patch("/api/moddersheets/:orderId", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { orderId } = req.params;
+      const { status, notes } = req.body;
+      
+      const { data, error } = await supabase
+        .from('orders')
+        .update({ 
+          status, 
+          notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      res.json(data);
+    } catch (error) {
+      console.error("ModderSheets update error:", error);
+      res.status(500).json({ error: "Buyurtmani yangilashda xatolik" });
+    }
+  });
+
+  // Temporary login tokens for admin web access
+  app.post("/api/admin/generate-login-token", async (req, res) => {
+    try {
+      const { telegram_id } = req.body;
+      
+      if (!telegram_id) {
+        return res.status(400).json({ error: "Telegram ID kerak" });
+      }
+
+      // Check if user is admin
+      const user = await storage.getUserByTelegramId(Number(telegram_id));
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ error: "Admin huquqlari kerak" });
+      }
+
+      // Generate temporary token
+      const token = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+      const { data, error } = await supabase
+        .from('temp_login_tokens')
+        .insert({
+          token,
+          telegram_id: Number(telegram_id),
+          expires_at: expiresAt.toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      res.json({ 
+        token,
+        login_url: `/admin/login?token=${token}`,
+        expires_at: expiresAt.toISOString()
+      });
+    } catch (error) {
+      console.error("Token generation error:", error);
+      res.status(500).json({ error: "Token yaratishda xatolik" });
+    }
+  });
+
+  // Verify login token
+  app.post("/api/admin/verify-token", async (req, res) => {
+    try {
+      const { token } = req.body;
+      
+      const { data, error } = await supabase
+        .from('temp_login_tokens')
+        .select('*, user:users(*)')
+        .eq('token', token)
+        .eq('used', false)
+        .gt('expires_at', new Date().toISOString())
+        .single();
+
+      if (error || !data) {
+        return res.status(401).json({ error: "Yaroqsiz yoki muddati o'tgan token" });
+      }
+
+      // Mark token as used
+      await supabase
+        .from('temp_login_tokens')
+        .update({ used: true })
+        .eq('id', data.id);
+
+      // Get user data
+      const user = await storage.getUserByTelegramId(data.telegram_id);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ error: "Admin huquqlari kerak" });
+      }
+
+      res.json({ user });
+    } catch (error) {
+      console.error("Token verification error:", error);
+      res.status(500).json({ error: "Token tekshirishda xatolik" });
     }
   });
 

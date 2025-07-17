@@ -49,9 +49,15 @@ export interface Category {
   name_uz: string;
   name_ru?: string;
   icon?: string;
+  parent_id?: string;
   order_index?: number;
   is_active?: boolean;
   created_at: string;
+}
+
+// Subcategories (same structure as categories but with parent_id)
+export interface Subcategory extends Category {
+  parent_id: string;
 }
 
 // Products
@@ -192,6 +198,7 @@ export const insertCategorySchema = z.object({
   name_uz: z.string().min(1),
   name_ru: z.string().optional(),
   icon: z.string().optional(),
+  parent_id: z.string().optional(),
   order_index: z.number().default(0),
   is_active: z.boolean().default(true),
 });
@@ -280,6 +287,23 @@ export const insertWorkerApplicationSchema = z.object({
   notes: z.string().optional(),
 });
 
+// Worker Reviews interface
+export interface WorkerReview {
+  id: string;
+  worker_id: string;
+  client_id: string;
+  rating: number;
+  comment?: string;
+  created_at: string;
+}
+
+export const insertWorkerReviewSchema = z.object({
+  worker_id: z.string(),
+  client_id: z.string(),
+  rating: z.number().min(1).max(5),
+  comment: z.string().optional(),
+});
+
 // Insert types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
@@ -291,3 +315,4 @@ export type InsertWorkType = z.infer<typeof insertWorkTypeSchema>;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
 export type InsertWorkerApplication = z.infer<typeof insertWorkerApplicationSchema>;
+export type InsertWorkerReview = z.infer<typeof insertWorkerReviewSchema>;

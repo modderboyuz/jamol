@@ -17,6 +17,8 @@ import type {
   InsertCompanySettings,
   WorkerApplication,
   InsertWorkerApplication,
+  WorkerReview,
+  InsertWorkerReview,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -31,6 +33,7 @@ export interface IStorage {
   
   // Categories
   getCategories(): Promise<Category[]>;
+  getSubcategories(parentId: string): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category>;
   deleteCategory(id: string): Promise<void>;
@@ -76,6 +79,10 @@ export interface IStorage {
   createWorkerApplication(application: InsertWorkerApplication): Promise<WorkerApplication>;
   updateWorkerApplication(id: string, application: Partial<InsertWorkerApplication>): Promise<WorkerApplication>;
   deleteWorkerApplication(id: string): Promise<void>;
+  
+  // Worker Reviews
+  getWorkerReviews(workerId: string): Promise<WorkerReview[]>;
+  createWorkerReview(review: InsertWorkerReview): Promise<WorkerReview>;
 }
 
 export class SupabaseStorage implements IStorage {
@@ -200,10 +207,26 @@ export class SupabaseStorage implements IStorage {
       .from('categories')
       .select('*')
       .eq('is_active', true)
+      .is('parent_id', null)
       .order('order_index');
     
     if (error) {
       console.error('Error fetching categories:', error);
+      return [];
+    }
+    return data || [];
+  }
+
+  async getSubcategories(parentId: string): Promise<Category[]> {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('is_active', true)
+      .eq('parent_id', parentId)
+      .order('order_index');
+    
+    if (error) {
+      console.error('Error fetching subcategories:', error);
       return [];
     }
     return data || [];
@@ -709,6 +732,38 @@ export class SupabaseStorage implements IStorage {
       console.error('Error deleting worker application:', error);
       throw error;
     }
+  }
+
+  // Worker Reviews
+  async getWorkerReviews(workerId: string): Promise<WorkerReview[]> {
+    const { data, error } = await supabase
+      .from('worker_reviews')
+      .select(`
+        *,
+        client:users!client_id(id, first_name, last_name)
+      `)
+      .eq('worker_id', workerId)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching worker reviews:', error);
+      return [];
+    }
+    return data || [];
+  }
+
+  async createWorkerReview(review: InsertWorkerReview): Promise<WorkerReview> {
+    const { data, error } = await supabase
+      .from('worker_reviews')
+      .insert(review)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating worker review:', error);
+      throw error;
+    }
+    return data;
   }
 }
 
