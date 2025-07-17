@@ -1,5 +1,5 @@
-import * as React from "react";
-import { authService, type AuthUser } from "@/lib/supabase";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { authService, type AuthUser } from "@/lib/auth";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -8,14 +8,13 @@ interface AuthContextType {
   isLoading: boolean;
 }
 
-const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }): React.ReactElement {
-  const [user, setUser] = React.useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  React.useEffect(() => {
-    // Check for existing session
+  useEffect(() => {
     const checkAuth = async () => {
       try {
         const currentUser = await authService.getCurrentUser();
@@ -40,15 +39,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     authService.logout();
   };
 
+  const value = {
+    user,
+    login,
+    logout,
+    isLoading
+  };
+  
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  const context = React.useContext(AuthContext);
+  const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }

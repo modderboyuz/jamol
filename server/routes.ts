@@ -1,8 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { bot } from "./telegram-bot";
-import { insertUserSchema, insertProductSchema, insertOrderSchema, insertCategorySchema, insertAdSchema } from "@shared/schema";
+import { storage } from "./supabase-storage";
 
 interface AuthRequest extends Request {
   telegramId?: string;
@@ -10,10 +8,7 @@ interface AuthRequest extends Request {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Start Telegram bot only if token is provided
-  if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_BOT_TOKEN !== "dummy_token") {
-    bot.start();
-  }
+  // Telegram bot integration can be added later if needed
 
   // Authentication middleware
   const requireAuth = (req: AuthRequest, res: Response, next: any) => {
@@ -62,8 +57,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/categories", requireAuth, requireAdmin, async (req, res) => {
     try {
-      const categoryData = insertCategorySchema.parse(req.body);
-      const category = await storage.createCategory(categoryData);
+      const category = await storage.createCategory(req.body);
       res.json(category);
     } catch (error) {
       res.status(400).json({ error: "Noto'g'ri ma'lumotlar" });
@@ -101,6 +95,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.json(products);
     } catch (error) {
+      console.error('Products API error:', error);
       res.status(500).json({ error: "Mahsulotlarni olishda xatolik" });
     }
   });
