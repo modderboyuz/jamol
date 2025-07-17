@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
 import { LoginModal } from "@/components/auth/login-modal";
-import { User, Phone, MessageCircle, Shield, LogOut } from "lucide-react";
+import { User, Phone, MessageCircle, Shield, LogOut, Settings } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function Profile() {
   const { user, login, logout } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
   const isMobile = useIsMobile();
+  const [location, navigate] = useLocation();
 
   React.useEffect(() => {
     if (!user) {
@@ -38,10 +40,7 @@ export default function Profile() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    setIsLoginModalOpen(true);
-  };
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -106,29 +105,34 @@ export default function Profile() {
           {user.role === 'admin' && (
             <Card>
               <CardHeader>
-                <CardTitle>Administrator</CardTitle>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="h-5 w-5" />
+                  <span>Administrator</span>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 mb-4">
                   Tizim boshqaruvi va ma'lumotlar
                 </p>
-                <Button variant="outline" className="w-full">
-                  Admin panelga o'tish
+                <Button 
+                  variant="outline" 
+                  className="w-full flex items-center justify-center space-x-2 hover:bg-gray-50"
+                  onClick={() => navigate('/admin')}
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>Admin panelga o'tish</span>
                 </Button>
               </CardContent>
             </Card>
           )}
 
-          {/* Actions */}
+          {/* Logout Button */}
           <Card>
-            <CardHeader>
-              <CardTitle>Amallar</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <Button 
                 variant="outline" 
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center space-x-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="w-full flex items-center justify-center space-x-2 text-red-600 border-red-200 hover:bg-red-50"
+                onClick={logout}
               >
                 <LogOut className="h-4 w-4" />
                 <span>Chiqish</span>

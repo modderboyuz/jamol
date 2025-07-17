@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,17 @@ export function Navigation() {
     }
   };
 
+  // Real-time search on input change
+  React.useEffect(() => {
+    if (searchQuery.trim() && location === '/') {
+      const timeoutId = setTimeout(() => {
+        window.location.href = `/?search=${encodeURIComponent(searchQuery)}`;
+      }, 500); // 500ms debounce
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [searchQuery, location]);
+
   const NavItems = ({ mobile = false }) => (
     <>
       {navigationItems.map((item) => {
@@ -82,7 +94,7 @@ export function Navigation() {
           <Link href="/">
             <div className="flex items-center space-x-2">
               <Package className="h-6 w-6 text-black" />
-              <span className="text-lg font-bold text-black">
+              <span className="text-lg font-bold text-black hidden md:block">
                 MetalBaza
               </span>
             </div>
@@ -125,13 +137,9 @@ export function Navigation() {
                   </DropdownMenuItem>
                   {user.role === 'admin' && (
                     <DropdownMenuItem asChild>
-                      <Link href="/admin">Admin</Link>
+                      <Link href="/admin">Admin Panel</Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout}>
-                    Chiqish
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (

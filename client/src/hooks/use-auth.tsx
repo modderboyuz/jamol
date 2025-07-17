@@ -21,20 +21,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         // Check if user is coming from Telegram Web App
         if (isTelegramWebApp && isReady && telegramUser && !user) {
-          // Auto-login with Telegram user data
-          const authUser: AuthUser = {
-            id: telegramUser.id.toString(),
-            phone: `tg_${telegramUser.id}`,
-            first_name: telegramUser.first_name,
-            last_name: telegramUser.last_name || '',
-            telegram_username: telegramUser.username,
-            telegram_id: telegramUser.id,
-            role: 'client',
-            type: 'telegram'
-          };
-          
-          login(authUser);
-          console.log('Auto-logged in via Telegram Web App:', telegramUser);
+          // Auto-login with Telegram user data - check role from database
+          try {
+            const response = await fetch('/api/auth/telegram', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ telegram_id: telegramUser.id })
+            });
+            
+            if (response.ok) {
+              const { user: dbUser } = await response.json();
+              const authUser: AuthUser = {
+                id: dbUser.id,
+                phone: dbUser.phone,
+                first_name: dbUser.first_name,
+                last_name: dbUser.last_name,
+                telegram_username: dbUser.telegram_username,
+                telegram_id: dbUser.telegram_id,
+                role: dbUser.role, // Use actual role from database
+                type: 'telegram'
+              };
+              
+              login(authUser);
+              console.log('Auto-logged in via Telegram Web App with role:', dbUser.role);
+            } else {
+              // Fallback to client role if user not found in database
+              const authUser: AuthUser = {
+                id: telegramUser.id.toString(),
+                phone: `tg_${telegramUser.id}`,
+                first_name: telegramUser.first_name,
+                last_name: telegramUser.last_name || '',
+                telegram_username: telegramUser.username,
+                telegram_id: telegramUser.id,
+                role: 'client',
+                type: 'telegram'
+              };
+              
+              login(authUser);
+              console.log('Auto-logged in via Telegram Web App as client (not in DB)');
+            }
+          } catch (error) {
+            console.error('Failed to check user role:', error);
+          }
         } else {
           // Regular auth check
           const currentUser = await authService.getCurrentUser();

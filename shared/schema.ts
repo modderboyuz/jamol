@@ -1,6 +1,15 @@
-import { pgTable, text, serial, integer, boolean, decimal, timestamp, uuid, bigint } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, decimal, timestamp, uuid, bigint, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Work types table for worker specializations
+export const workTypes = pgTable("work_types", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name_uz: text("name_uz").notNull(),
+  name_ru: text("name_ru").notNull(),
+  description: text("description"),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -11,14 +20,23 @@ export const users = pgTable("users", {
   telegram_id: bigint("telegram_id", { mode: "number" }).unique(),
   role: text("role", { enum: ["client", "worker", "admin"] }).default("client").notNull(),
   type: text("type", { enum: ["telegram", "google"] }).default("telegram").notNull(),
+  switched_to: text("switched_to", { enum: ["client", "admin"] }), // For admin role switching
   
-  // Passport and personal information (for workers mainly)
+  // Optional fields for workers
+  birth_date: date("birth_date"),
+  passport: text("passport"),
+  passport_image: text("passport_image"),
+  profile_image: text("profile_image"),
+  work_type: uuid("work_type").references(() => workTypes.id),
+  description: text("description"),
+  average_pay: integer("average_pay"),
+  address: text("address"),
+  
+  // Legacy fields - keeping for compatibility
   passport_series: text("passport_series"),
   passport_number: text("passport_number"),
   passport_issued_by: text("passport_issued_by"),
   passport_issued_date: timestamp("passport_issued_date"),
-  address: text("address"),
-  birth_date: timestamp("birth_date"),
   specialization: text("specialization"), // For workers: what kind of work they do
   experience_years: integer("experience_years"), // Work experience
   hourly_rate: decimal("hourly_rate", { precision: 10, scale: 2 }), // Price per hour
@@ -89,6 +107,14 @@ export const ads = pgTable("ads", {
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const cart_items = pgTable("cart_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  user_id: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  product_id: uuid("product_id").references(() => products.id, { onDelete: "cascade" }).notNull(),
+  quantity: integer("quantity").default(1).notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -122,6 +148,26 @@ export const insertAdSchema = createInsertSchema(ads).omit({
   id: true,
   created_at: true,
 });
+
+export const insertWorkTypeSchema = createInsertSchema(workTypes).omit({
+  id: true,
+  created_at: true,
+});
+
+export const insertCartItemSchema = createInsertSchema(cart_items).omit({
+  id: true,
+  created_at: true,
+});
+
+// Types
+export type User = typeof users.$inferSelect;
+export type Category = typeof categories.$inferSelect;
+export type Product = typeof products.$inferSelect;
+export type Order = typeof orders.$inferSelect;
+export type OrderItem = typeof order_items.$inferSelect;
+export type Ad = typeof ads.$inferSelect;
+export type WorkType = typeof workTypes.$inferSelect;
+export type CartItem = typeof cart_items.$inferSelect;
 
 // Types
 export type User = typeof users.$inferSelect;

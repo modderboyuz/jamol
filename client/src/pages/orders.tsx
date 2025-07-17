@@ -5,10 +5,12 @@ import { BottomNavigation } from "@/components/layout/bottom-navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
 import { LoginModal } from "@/components/auth/login-modal";
-import type { Order } from "@shared/schema";
+import { ShoppingCart, Package, Trash2 } from "lucide-react";
+import type { Order, CartItem, Product } from "@shared/schema";
 
 export default function Orders() {
   const { user, login } = useAuth();
@@ -26,6 +28,18 @@ export default function Orders() {
       });
       if (!response.ok) {
         throw new Error('Buyurtmalarni yuklashda xatolik');
+      }
+      return response.json();
+    },
+  });
+
+  const { data: cartItems, isLoading: isCartLoading, refetch: refetchCart } = useQuery<(CartItem & { product: Product })[]>({
+    queryKey: ['/api/cart'],
+    enabled: !!user,
+    queryFn: async () => {
+      const response = await fetch('/api/cart');
+      if (!response.ok) {
+        throw new Error('Savatni yuklashda xatolik');
       }
       return response.json();
     },
@@ -67,6 +81,30 @@ export default function Orders() {
       case 'cancelled': return 'Bekor qilingan';
       default: return status;
     }
+  };
+
+  const removeFromCart = async (productId: string) => {
+    try {
+      const response = await fetch(`/api/cart/${productId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        refetchCart();
+      }
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+    }
+  };
+
+  const formatPrice = (price: string) => {
+    return new Intl.NumberFormat('uz-UZ').format(Number(price)) + " so'm";
+  };
+
+  const getTotalCartAmount = () => {
+    if (!cartItems) return 0;
+    return cartItems.reduce((total, item) => {
+      return total + (Number(item.product.price) * item.quantity);
+    }, 0);
   };
 
   return (

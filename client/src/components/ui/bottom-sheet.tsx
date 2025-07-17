@@ -38,11 +38,14 @@ export function BottomSheet({ isOpen, onClose, title, children, className }: Bot
       />
       
       {/* Sheet */}
-      <div className={cn(
-        "relative w-full max-w-md bg-white rounded-t-3xl p-6 transform transition-transform duration-300 ease-out",
-        "animate-in slide-in-from-bottom shadow-2xl",
-        className
-      )}>
+      <div 
+        className={cn(
+          "relative w-full max-w-md bg-white rounded-t-3xl p-6 transform transition-transform duration-300 ease-out",
+          "animate-in slide-in-from-bottom shadow-2xl max-h-[95vh] overflow-y-auto",
+          className
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Handle */}
         <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-6" />
         
@@ -51,7 +54,11 @@ export function BottomSheet({ isOpen, onClose, title, children, className }: Bot
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
             <button
-              onClick={onClose}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClose();
+              }}
               className="p-2 rounded-full hover:bg-gray-100 transition-colors"
             >
               <X className="w-5 h-5 text-gray-500" />

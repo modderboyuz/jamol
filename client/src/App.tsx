@@ -7,8 +7,10 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { AuthProvider } from "@/hooks/use-auth.tsx";
 import { useBottomNav } from "@/hooks/use-bottom-nav";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 import { Navigation } from "@/components/layout/navigation";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
+import { CartBar } from "@/components/layout/cart-bar";
 import Home from "@/pages/home";
 import Catalog from "@/pages/catalog";
 import Workers from "@/pages/workers";
@@ -21,6 +23,11 @@ import NotFound from "@/pages/not-found";
 function Router() {
   const { isVisible } = useBottomNav();
   const { user } = useAuth();
+  const [location, navigate] = useLocation();
+
+  const handleCartOrder = () => {
+    navigate("/orders");
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -37,6 +44,7 @@ function Router() {
         </Switch>
       </main>
       {isVisible && <BottomNavigation />}
+      <CartBar onOrderClick={handleCartOrder} />
     </div>
   );
 }

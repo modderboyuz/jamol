@@ -251,7 +251,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(filteredWorkers);
     } catch (error) {
+      console.error("Workers API error:", error);
       res.status(500).json({ error: "Ustalarni olishda xatolik" });
+    }
+  });
+
+  // Update user switched_to status for admin role switching
+  app.post("/api/users/:id/switch-role", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { switchedTo } = req.body;
+      
+      const updatedUser = await storage.updateUserSwitchedTo(id, switchedTo);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error switching user role:", error);
+      res.status(500).json({ error: "Rol almashtirishda xatolik" });
+    }
+  });
+
+  // Cart routes
+  app.get("/api/cart", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const user = await storage.getUserByTelegramId(Number(req.telegramId));
+      if (!user) {
+        return res.status(404).json({ error: "Foydalanuvchi topilmadi" });
+      }
+      const cartItems = await storage.getCartItems(user.id);
+      res.json(cartItems);
+    } catch (error) {
+      console.error("Error getting cart items:", error);
+      res.status(500).json({ error: "Savatni olishda xatolik" });
+    }
+  });
+
+  app.post("/api/cart", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      console.log("Adding to cart - telegram ID:", req.telegramId);
+      const user = await storage.getUserByTelegramId(Number(req.telegramId));
+      console.log("Found user:", user ? user.id : 'null');
+      
+      if (!user) {
+        return res.status(404).json({ error: "Foydalanuvchi topilmadi" });
+      }
+      
+      const { productId, quantity } = req.body;
+      console.log("Cart data:", { productId, quantity });
+      
+      if (!productId || !quantity) {
+        return res.status(400).json({ error: "Product ID va miqdor majburiy" });
+      }
+      
+      const cartItem = await storage.addToCart(user.id, productId, quantity);
+      res.json(cartItem);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      res.status(500).json({ error: "Savatga qo'shishda xatolik" });
+    }
+  });
+
+  app.put("/api/cart/:productId", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const user = await storage.getUserByTelegramId(Number(req.telegramId));
+      if (!user) {
+        return res.status(404).json({ error: "Foydalanuvchi topilmadi" });
+      }
+      
+      const { productId } = req.params;
+      const { quantity } = req.body;
+      
+      if (!quantity || quantity < 1) {
+        return res.status(400).json({ error: "Yaroqli miqdor kiriting" });
+      }
+      
+      const cartItem = await storage.updateCartItem(user.id, productId, quantity);
+      res.json(cartItem);
+    } catch (error) {
+      console.error("Error updating cart item:", error);
+      res.status(500).json({ error: "Savat elementini yangilashda xatolik" });
+    }
+  });
+
+  app.delete("/api/cart/:productId", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const user = await storage.getUserByTelegramId(Number(req.telegramId));
+      if (!user) {
+        return res.status(404).json({ error: "Foydalanuvchi topilmadi" });
+      }
+      
+      const { productId } = req.params;
+      await storage.removeFromCart(user.id, productId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing from cart:", error);
+      res.status(500).json({ error: "Savatdan o'chirishda xatolik" });
+    }
+  });
+
+  app.delete("/api/cart", requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const user = await storage.getUserByTelegramId(Number(req.telegramId));
+      if (!user) {
+        return res.status(404).json({ error: "Foydalanuvchi topilmadi" });
+      }
+      
+      await storage.clearCart(user.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+      res.status(500).json({ error: "Savatni tozalashda xatolik" });
     }
   });
 

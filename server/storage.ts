@@ -1,5 +1,4 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import { db } from './db';
 import { eq, and, desc, ilike, or, isNull, sql } from "drizzle-orm";
 import { 
   users, 
@@ -8,6 +7,7 @@ import {
   orders, 
   order_items, 
   ads,
+  cart_items,
   type User, 
   type InsertUser, 
   type Category, 
@@ -19,14 +19,10 @@ import {
   type OrderItem, 
   type InsertOrderItem,
   type Ad, 
-  type InsertAd
+  type InsertAd,
+  type CartItem,
+  insertCartItemSchema
 } from "@shared/schema";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-
-const db = drizzle(pool);
 
 export interface IStorage {
   // Users
@@ -35,6 +31,7 @@ export interface IStorage {
   getUserByPhone(phone: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User>;
+  updateUserSwitchedTo(id: string, switchedTo: 'client' | 'admin' | null): Promise<User>;
   getWorkers(search?: string): Promise<User[]>;
   
   // Categories
@@ -59,6 +56,13 @@ export interface IStorage {
   // Order Items
   getOrderItems(orderId: string): Promise<OrderItem[]>;
   createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
+  
+  // Cart
+  getCartItems(userId: string): Promise<(CartItem & { product: Product })[]>;
+  addToCart(userId: string, productId: string, quantity: number): Promise<CartItem>;
+  updateCartItem(userId: string, productId: string, quantity: number): Promise<CartItem>;
+  removeFromCart(userId: string, productId: string): Promise<void>;
+  clearCart(userId: string): Promise<void>;
   
   // Ads
   getActiveAds(): Promise<Ad[]>;
@@ -96,24 +100,31 @@ export class DrizzleStorage implements IStorage {
     return result[0];
   }
 
+  async updateUserSwitchedTo(id: string, switchedTo: 'client' | 'admin' | null): Promise<User> {
+    const result = await db.update(users).set({ switched_to: switchedTo }).where(eq(users.id, id)).returning();
+    return result[0];
+  }
+
   async getWorkers(search?: string): Promise<User[]> {
-    // Simplified query to avoid SQL issues - just get workers for now
-    let query = db.select().from(users).where(eq(users.role, 'worker'));
-
-    if (search) {
-      query = query.where(
-        and(
-          eq(users.role, 'worker'),
-          or(
-            ilike(users.first_name, `%${search}%`),
-            ilike(users.last_name, `%${search}%`),
-            ilike(users.telegram_username, `%${search}%`)
-          )!
-        )
-      );
+    try {
+      // Simple query first - just get all workers
+      const result = await db.select().from(users).where(eq(users.role, 'worker')).orderBy(desc(users.created_at));
+      
+      // Apply search filter in memory if needed
+      if (search && result.length > 0) {
+        const searchLower = search.toLowerCase();
+        return result.filter(user => 
+          user.first_name?.toLowerCase().includes(searchLower) ||
+          user.last_name?.toLowerCase().includes(searchLower) ||
+          user.telegram_username?.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error getting workers:', error);
+      return [];
     }
-
-    return await query.orderBy(desc(users.created_at));
   }
 
   // Categories
@@ -250,6 +261,70 @@ export class DrizzleStorage implements IStorage {
 
   async deleteAd(id: string): Promise<void> {
     await db.delete(ads).where(eq(ads.id, id));
+  }
+
+  // Cart functionality
+  async getCartItems(userId: string): Promise<(CartItem & { product: Product })[]> {
+    const result = await db
+      .select({
+        id: cart_items.id,
+        user_id: cart_items.user_id,
+        product_id: cart_items.product_id,
+        quantity: cart_items.quantity,
+        created_at: cart_items.created_at,
+        product: products
+      })
+      .from(cart_items)
+      .innerJoin(products, eq(cart_items.product_id, products.id))
+      .where(eq(cart_items.user_id, userId))
+      .orderBy(desc(cart_items.created_at));
+    
+    return result;
+  }
+
+  async addToCart(userId: string, productId: string, quantity: number): Promise<CartItem> {
+    // Check if item already exists in cart
+    const existing = await db
+      .select()
+      .from(cart_items)
+      .where(and(eq(cart_items.user_id, userId), eq(cart_items.product_id, productId)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      // Update existing item
+      const result = await db
+        .update(cart_items)
+        .set({ quantity: existing[0].quantity + quantity })
+        .where(eq(cart_items.id, existing[0].id))
+        .returning();
+      return result[0];
+    } else {
+      // Create new item
+      const result = await db
+        .insert(cart_items)
+        .values({ user_id: userId, product_id: productId, quantity })
+        .returning();
+      return result[0];
+    }
+  }
+
+  async updateCartItem(userId: string, productId: string, quantity: number): Promise<CartItem> {
+    const result = await db
+      .update(cart_items)
+      .set({ quantity })
+      .where(and(eq(cart_items.user_id, userId), eq(cart_items.product_id, productId)))
+      .returning();
+    return result[0];
+  }
+
+  async removeFromCart(userId: string, productId: string): Promise<void> {
+    await db
+      .delete(cart_items)
+      .where(and(eq(cart_items.user_id, userId), eq(cart_items.product_id, productId)));
+  }
+
+  async clearCart(userId: string): Promise<void> {
+    await db.delete(cart_items).where(eq(cart_items.user_id, userId));
   }
 }
 
