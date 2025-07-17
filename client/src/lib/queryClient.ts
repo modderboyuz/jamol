@@ -1,4 +1,10 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://hcgvmcwcdfdilyahzsqo.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjZ3ZtY3djZGZkaWx5YWh6c3FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3NDc3NTMsImV4cCI6MjA2ODMyMzc1M30.Vofrm1hoAHNxhOSKVZVaRv9KEECkXAT-dQph9jGvb1U';
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -23,32 +29,25 @@ export async function apiRequest(
   return res;
 }
 
-type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
-      credentials: "include",
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
-
-    await throwIfResNotOk(res);
-    return await res.json();
-  };
-
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
+      queryFn: async ({ queryKey }) => {
+        const url = queryKey[0] as string;
+        const res = await fetch(url, {
+          credentials: "include",
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
+        return res.json();
+      },
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
     },
     mutations: {
       retry: false,
