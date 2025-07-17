@@ -8,7 +8,25 @@ interface AuthRequest extends Request {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Telegram bot integration can be added later if needed
+  // Telegram webhook setup
+  if (process.env.TELEGRAM_BOT_TOKEN) {
+    try {
+      const { telegramRouter, setWebhook } = await import("./telegram-webhook");
+      app.use(telegramRouter);
+      
+      // Set webhook after server starts
+      setTimeout(async () => {
+        try {
+          await setWebhook();
+          console.log("Telegram webhook configured successfully");
+        } catch (error) {
+          console.error("Failed to set Telegram webhook:", error);
+        }
+      }, 5000);
+    } catch (error) {
+      console.log("Telegram bot not configured:", error);
+    }
+  }
 
   // Authentication middleware
   const requireAuth = (req: AuthRequest, res: Response, next: any) => {
