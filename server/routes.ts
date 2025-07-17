@@ -215,6 +215,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Workers
+  app.get("/api/workers", async (req: AuthRequest, res: Response) => {
+    try {
+      const { search } = req.query;
+      const workers = await storage.getWorkers(search as string);
+      
+      // Check if user is admin to show sensitive data
+      let isAdmin = false;
+      if (req.telegramId) {
+        const user = await storage.getUserByTelegramId(Number(req.telegramId));
+        isAdmin = user?.role === 'admin';
+      }
+      
+      // Filter sensitive data for non-admin users
+      const filteredWorkers = workers.map(worker => {
+        if (isAdmin) {
+          return worker; // Show all data for admin
+        } else {
+          // Hide sensitive data for non-admin users
+          return {
+            id: worker.id,
+            first_name: worker.first_name,
+            last_name: worker.last_name,
+            telegram_username: worker.telegram_username,
+            role: worker.role,
+            specialization: worker.specialization,
+            experience_years: worker.experience_years,
+            hourly_rate: worker.hourly_rate,
+            created_at: worker.created_at
+            // Hide: phone, passport_series, passport_number, passport_issued_by, passport_issued_date, address
+          };
+        }
+      });
+      
+      res.json(filteredWorkers);
+    } catch (error) {
+      res.status(500).json({ error: "Ustalarni olishda xatolik" });
+    }
+  });
+
   // Admin routes
   app.get("/api/admin/users", requireAuth, requireAdmin, async (req, res) => {
     try {

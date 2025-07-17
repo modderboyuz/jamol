@@ -43,7 +43,7 @@ export function CategoryNav({ selectedCategory, onCategoryChange }: CategoryNavP
   return (
     <nav className="bg-white border-b border-gray-200 py-3">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-center space-x-4 overflow-x-auto scrollbar-hide">
+        <div className="flex space-x-4 overflow-x-auto scrollbar-hide pl-4">
           {/* All categories button */}
           <button
             onClick={() => onCategoryChange(undefined)}

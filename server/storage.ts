@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { eq, and, desc, ilike, or, isNull } from "drizzle-orm";
+import { eq, and, desc, ilike, or, isNull, sql } from "drizzle-orm";
 import { 
   users, 
   categories, 
@@ -35,6 +35,7 @@ export interface IStorage {
   getUserByPhone(phone: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User>;
+  getWorkers(search?: string): Promise<User[]>;
   
   // Categories
   getCategories(): Promise<Category[]>;
@@ -93,6 +94,26 @@ export class DrizzleStorage implements IStorage {
   async updateUser(id: string, user: Partial<InsertUser>): Promise<User> {
     const result = await db.update(users).set(user).where(eq(users.id, id)).returning();
     return result[0];
+  }
+
+  async getWorkers(search?: string): Promise<User[]> {
+    // Simplified query to avoid SQL issues - just get workers for now
+    let query = db.select().from(users).where(eq(users.role, 'worker'));
+
+    if (search) {
+      query = query.where(
+        and(
+          eq(users.role, 'worker'),
+          or(
+            ilike(users.first_name, `%${search}%`),
+            ilike(users.last_name, `%${search}%`),
+            ilike(users.telegram_username, `%${search}%`)
+          )!
+        )
+      );
+    }
+
+    return await query.orderBy(desc(users.created_at));
   }
 
   // Categories

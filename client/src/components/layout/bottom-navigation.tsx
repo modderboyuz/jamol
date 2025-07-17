@@ -5,12 +5,14 @@ import {
   Home, 
   Grid3X3, 
   ClipboardList, 
-  User 
+  User,
+  Users
 } from "lucide-react";
 
 const navItems = [
   { name: 'Bosh sahifa', href: '/', icon: Home },
   { name: 'Katalog', href: '/catalog', icon: Grid3X3 },
+  { name: 'Ustalar', href: '/workers', icon: Users },
   { name: 'Buyurtmalar', href: '/orders', icon: ClipboardList },
   { name: 'Profil', href: '/profile', icon: User },
 ];

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ProductCard } from "./product-card";
+import { ProductDetailModal } from "./product-detail-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@shared/schema";
@@ -11,6 +12,9 @@ interface ProductGridProps {
 }
 
 export function ProductGrid({ categoryId, searchQuery }: ProductGridProps) {
+  const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+
   const { data: products, isLoading, error } = useQuery<Product[]>({
     queryKey: ['/api/products', categoryId, searchQuery],
     queryFn: async () => {
@@ -26,10 +30,19 @@ export function ProductGrid({ categoryId, searchQuery }: ProductGridProps) {
     },
   });
 
-  const handleAddToCart = (productId: string) => {
-    // Implement add to cart functionality
-    console.log('Add to cart:', productId);
+  const handleAddToCart = (productId: string, quantity: number = 1) => {
+    console.log('Add to cart:', productId, quantity);
     // This would typically update a cart state or send to backend
+  };
+
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedProduct(null);
   };
 
   if (isLoading) {
@@ -89,7 +102,8 @@ export function ProductGrid({ categoryId, searchQuery }: ProductGridProps) {
           <ProductCard
             key={product.id}
             product={product}
-            onAddToCart={handleAddToCart}
+            onAddToCart={(productId) => handleAddToCart(productId, 1)}
+            onProductClick={handleProductClick}
           />
         ))}
       </div>
@@ -105,6 +119,13 @@ export function ProductGrid({ categoryId, searchQuery }: ProductGridProps) {
           </Button>
         </div>
       )}
+
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onAddToCart={handleAddToCart}
+      />
     </div>
   );
 }

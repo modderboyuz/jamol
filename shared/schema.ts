@@ -11,6 +11,18 @@ export const users = pgTable("users", {
   telegram_id: bigint("telegram_id", { mode: "number" }).unique(),
   role: text("role", { enum: ["client", "worker", "admin"] }).default("client").notNull(),
   type: text("type", { enum: ["telegram", "google"] }).default("telegram").notNull(),
+  
+  // Passport and personal information (for workers mainly)
+  passport_series: text("passport_series"),
+  passport_number: text("passport_number"),
+  passport_issued_by: text("passport_issued_by"),
+  passport_issued_date: timestamp("passport_issued_date"),
+  address: text("address"),
+  birth_date: timestamp("birth_date"),
+  specialization: text("specialization"), // For workers: what kind of work they do
+  experience_years: integer("experience_years"), // Work experience
+  hourly_rate: decimal("hourly_rate", { precision: 10, scale: 2 }), // Price per hour
+  
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

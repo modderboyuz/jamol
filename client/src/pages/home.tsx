@@ -84,11 +84,29 @@ function AdBanner() {
 
   const ad = ads[0];
 
+  const handleAdClick = () => {
+    if (ad.link_url) {
+      window.open(ad.link_url, '_blank');
+    }
+  };
+
   return (
-    <div className="px-4 py-3 mb-6">
-      <div className="bg-black rounded-xl p-4 text-white">
-        <h3 className="font-semibold text-lg mb-1">{ad.title_uz}</h3>
-        <p className="text-gray-300 text-sm">{ad.description_uz}</p>
+    <div className="px-4 mb-6">
+      <div 
+        className="w-full h-32 bg-gray-200 cursor-pointer overflow-hidden"
+        onClick={handleAdClick}
+      >
+        {ad.image_url ? (
+          <img 
+            src={ad.image_url} 
+            alt={ad.title_uz}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-gray-200 to-gray-300 flex items-center justify-center">
+            <span className="text-gray-500 text-sm">{ad.title_uz}</span>
+          </div>
+        )}
       </div>
     </div>
   );

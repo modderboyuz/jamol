@@ -9,18 +9,24 @@ import type { Product } from "@shared/schema";
 interface ProductCardProps {
   product: Product;
   onAddToCart?: (productId: string) => void;
+  onProductClick?: (product: Product) => void;
 }
 
-export function ProductCard({ product, onAddToCart }: ProductCardProps) {
+export function ProductCard({ product, onAddToCart, onProductClick }: ProductCardProps) {
   const { user, login } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering product click
     if (!user) {
       setIsLoginModalOpen(true);
       return;
     }
     onAddToCart?.(product.id);
+  };
+
+  const handleProductClick = () => {
+    onProductClick?.(product);
   };
 
   const formatPrice = (price: string) => {
@@ -31,7 +37,10 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
 
   return (
     <>
-      <Card className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200 group">
+      <Card 
+        className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200 group cursor-pointer"
+        onClick={handleProductClick}
+      >
         <div className="aspect-square bg-gray-100 relative overflow-hidden">
           <img
             src={product.image_url || placeholderImage}
