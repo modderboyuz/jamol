@@ -1,0 +1,69 @@
+You are tasked with creating a Telegram bot integrated with a web app using Next.js and Supabase. The bot's main functionality includes user registration via phone number, name, and Telegram username, followed by automatic login on the web app.
+
+1. **Telegram Bot Setup**:
+    - The bot should accept a user command `/register` which will initiate the registration process.
+    - Upon receiving the `/register` command, the bot should:
+        a) Ask for the user’s phone number.
+        b) Ask for the user’s first and last name.
+        c) Store the user’s phone number, first name, last name, and Telegram username in the Supabase `users` table.
+        d) The user's role (client, worker, admin) should be assigned upon registration by querying the database for their phone number or username.
+        e) The bot should also assign a unique `telegram_id` to the `users` table, capturing the user's Telegram user ID.
+
+2. **Supabase Integration**:
+    - Create a Supabase project for handling user registration, authentication, and product management.
+    - In Supabase, create the following tables:
+        a) `users` — Stores user information, including `phone`, `first_name`, `last_name`, `telegram_username`, `role`, and `telegram_id`.
+        b) `products` — Stores product details including name, price, and description.
+        c) `orders` — Stores user orders with details.
+    
+    - After receiving the user data via the bot, store all user details in Supabase, including the `role` and `telegram_id`.
+    - When the user logs in via Telegram, a special API endpoint (`/loginastelegram`) should authenticate the user and link their Telegram account to the web app.
+
+3. **Web App Setup (Next.js)**:
+    - The web app should have the following structure:
+        a) Homepage with login buttons (Google, Telegram).
+        b) A "Products" page displaying the products (filterable by category).
+        c) A "Order" page where the user can view their orders and place new ones.
+        d) A "Profile" page where users can view and update their details.
+    
+    - Use **Next.js** to render the pages and use **Tailwind CSS** for styling. The design should be sleek and user-friendly.
+    - If the user is logged in via Telegram, the web app should display their Telegram username and profile info. Use Supabase for authentication to link their Telegram account for login.
+    
+4. **Mobile Design**:
+    - Ensure that the web app has a mobile-first design.
+    - For mobile devices, implement a bottom navigation bar with the following sections: 
+        a) Home
+        b) Catalog (Products)
+        c) Workers (Masters)
+        d) My Orders
+        e) Profile
+    - Ensure that all interactions are fast and seamless for a smooth mobile experience.
+
+5. **Role Management**:
+    - When users log in via Telegram, their role should be checked from Supabase:
+        a) If they are an admin, they should have access to the admin panel to manage products, orders, and users.
+        b) If they are a worker, they can manage their services and view their orders.
+        c) If they are a client, they can browse products, place orders, and track their order status.
+    - Admins can also perform CRUD operations on products and can download/upload data in Excel format.
+
+6. **Design Requirements**:
+    - Use **Untitled UI** for the design (ios style components).
+    - The app should be **black and white** with a modern, minimalistic feel.
+    - Make sure the design is fully responsive, so it works perfectly on mobile and desktop.
+
+7. **Admin Panel**:
+    - Admins should be able to manage all the data (products, workers, orders).
+    - The admin should be able to:
+        a) Add, update, or delete products.
+        b) View and manage orders.
+        c) Assign workers to tasks.
+        d) Export or import data via Excel files.
+    - All management functionalities should be inside a **protected admin route**.
+
+8. **Web App Authentication**:
+    - Use Supabase's authentication to log users in via Telegram or Google.
+    - When users log in, store their information in the `users` table (including `telegram_id` and `phone`).
+    - Implement `/loginastelegram` endpoint for seamless authentication between the Telegram bot and the web app.
+    
+9. **Future Considerations**:
+    - Payment integration will be added later, but make sure the database and structure are designed to accommodate payment methods (such as adding a "total" price for orders and payment methods).
