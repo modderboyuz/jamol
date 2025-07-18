@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertOrderSchema, insertAdSchema, insertWorkerApplicationSchema } from "@shared/schema";
+import { insertOrderSchema, insertAdSchema, insertWorkerApplicationSchema, insertCategorySchema, insertProductSchema } from "@shared/schema";
 
 interface AuthRequest extends Request {
   telegramId?: string;
@@ -12,7 +12,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Telegram webhook setup
   if (process.env.TELEGRAM_BOT_TOKEN) {
     try {
-      const { telegramRouter, setWebhook } = await import("./telegram-webhook");
+      const { telegramRouter, setWebhook } = await import("./telegram-webhook.js");
       app.use(telegramRouter);
       
       // Set webhook after server starts

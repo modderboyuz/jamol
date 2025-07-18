@@ -222,21 +222,3 @@ export type WorkType = typeof workTypes.$inferSelect;
 export type CartItem = typeof cart_items.$inferSelect;
 export type CompanySettings = typeof company_settings.$inferSelect;
 export type WorkerApplication = typeof worker_applications.$inferSelect;
-
-// Types
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type Category = typeof categories.$inferSelect;
-export type InsertCategory = z.infer<typeof insertCategorySchema>;
-export type Product = typeof products.$inferSelect;
-export type InsertProduct = z.infer<typeof insertProductSchema>;
-export type Order = typeof orders.$inferSelect;
-export type InsertOrder = z.infer<typeof insertOrderSchema>;
-export type OrderItem = typeof order_items.$inferSelect;
-export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
-export type Ad = typeof ads.$inferSelect;
-export type InsertAd = z.infer<typeof insertAdSchema>;
-export type CompanySettings = typeof company_settings.$inferSelect;
-export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
-export type WorkerApplication = typeof worker_applications.$inferSelect;
-export type InsertWorkerApplication = z.infer<typeof insertWorkerApplicationSchema>;

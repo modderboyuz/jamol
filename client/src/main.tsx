@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import App from "./App.js";
 import "./index.css";
 
 // Initialize sample data
@@ -65,6 +65,4 @@ const initSampleData = async () => {
 };
 
 // Initialize app
-initSampleData().then(() => {
-  createRoot(document.getElementById("root")!).render(<App />);
-});
+createRoot(document.getElementById("root")!).render(<App />);

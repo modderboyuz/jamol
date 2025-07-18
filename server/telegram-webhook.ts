@@ -1,8 +1,8 @@
 import { Bot, webhookCallback } from "grammy";
 import { conversations, createConversation } from "@grammyjs/conversations";
 import { Router } from "express";
-import { storage } from "./supabase-storage";
-import type { insertUserSchema } from "@shared/schema";
+import { storage } from "./storage.js";
+import type { InsertUser } from "@shared/schema";
 import { z } from "zod";
 
 const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN || "");

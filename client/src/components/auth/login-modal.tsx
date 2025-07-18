@@ -2,7 +2,7 @@ import * as React from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
-import type { AuthUser } from "@/lib/supabase";
+import type { AuthUser } from "@/lib/auth";
 
 interface LoginModalProps {
   isOpen: boolean;

@@ -97,7 +97,7 @@ export function ProductDetailModal({
       
       if (response.ok) {
         // Invalidate cart query to refresh cart bar
-        import('@/lib/query-client').then(({ queryClient }) => {
+        import('@/lib/query-client.js').then(({ queryClient }) => {
           queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
         });
         onAddToCart(product.id, quantity);
