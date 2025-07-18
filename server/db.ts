@@ -1,15 +1,28 @@
-import { createClient } from '@supabase/supabase-js';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import * as schema from "@shared/schema";
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://hcgvmcwcdfdilyahzsqo.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjZ3ZtY3djZGZkaWx5YWh6c3FvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjc0Nzc1MywiZXhwIjoyMDY4MzIzNzUzfQ.4Be30fbPpPkwT98GqTT6I4-b7XaqSw4mnqQHGSciCN8';
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Please add your Supabase database URL to environment variables.",
+  );
+}
 
-export const supabase = createClient(supabaseUrl, supabaseServiceKey);
+console.log('Supabase DATABASE_URL configured:', process.env.DATABASE_URL ? 'Yes' : 'No');
 
-console.log('✅ Supabase client initialized successfully');
+// Configure postgres connection for Supabase
+const client = postgres(process.env.DATABASE_URL, {
+  ssl: 'require',
+  max: 1, // Limit connections for serverless
+  idle_timeout: 20,
+  connect_timeout: 10,
+});
+
+export const db = drizzle(client, { schema });
 
 // Test connection
-supabase.auth.getSession().then(() => {
-  console.log('✅ Supabase connection tested successfully');
+client`SELECT 1`.then(() => {
+  console.log('✅ Supabase database connected successfully');
 }).catch((error) => {
-  console.error('❌ Supabase connection test failed:', error);
+  console.error('❌ Supabase database connection failed:', error);
 });
