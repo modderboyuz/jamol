@@ -110,8 +110,11 @@ export function ProductDetailModal({
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
-      // Fallback to original handler
-      onAddToCart(product.id, quantity);
+      toast({
+        title: "Xatolik",
+        description: "Savatga qo'shishda xatolik yuz berdi",
+        variant: "destructive",
+      });
       onClose();
     }
   };

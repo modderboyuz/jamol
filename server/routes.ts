@@ -282,15 +282,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { search } = req.query;
       
-      // Get workers with reviews from supabase directly
+      // Get workers with reviews from supabase directly (fixed relationship)
       const { data, error } = await supabase
         .from('users')
         .select(`
           *,
-          reviews:worker_reviews(rating, comment, created_at)
+          reviews:worker_reviews!worker_reviews_worker_id_fkey(rating, comment, created_at)
         `)
         .eq('role', 'worker')
-        .eq('is_available', true)
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (error) {

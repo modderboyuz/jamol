@@ -23,9 +23,18 @@ const categoryIcons = {
   wrench: Wrench,
   truck: Truck,
   zap: Zap,
+  hammer: Building2,
+  flame: Zap,
+  scissors: Wrench,
+  droplet: Truck,
+  shape: Building2,
+  circle: Wrench,
 };
 
-function Categories() {
+function Categories({ onCategorySelect, selectedCategoryId }: { 
+  onCategorySelect: (categoryId: string | null) => void;
+  selectedCategoryId: string | null;
+}) {
   const { data: categories, isLoading } = useQuery({
     queryKey: ['/api/categories'],
   });
@@ -37,7 +46,7 @@ function Categories() {
           <div className="flex space-x-2 overflow-x-auto pb-1">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex-shrink-0">
-                <Skeleton className="w-10 h-10 rounded-full" />
+                <Skeleton className="w-12 h-12 rounded-xl" />
                 <Skeleton className="w-8 h-2 mt-1 mx-auto" />
               </div>
             ))}
@@ -55,18 +64,45 @@ function Categories() {
       <div className="flex justify-center">
         <div className="flex space-x-4 overflow-x-auto pb-1 scrollbar-hide">
           {mainCategories.slice(0, 6).map((category: Category) => {
-            const IconComponent = categoryIcons[category.icon as keyof typeof categoryIcons] || Package;
+            const IconComponent = categoryIcons[category.icon_name as keyof typeof categoryIcons] || Package;
+            const isSelected = selectedCategoryId === category.id;
+            const categoryColor = category.color || '#3B82F6';
+            
             return (
-              <Link key={category.id} href={`/catalog?category=${category.id}`}>
-                <div className="flex-shrink-0 flex flex-col items-center space-y-1 cursor-pointer group">
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200 transition-colors">
-                    <IconComponent className="w-4 h-4 text-gray-600" />
+              <div 
+                key={category.id} 
+                onClick={() => onCategorySelect(isSelected ? null : category.id)}
+                className="cursor-pointer"
+              >
+                <div className="flex-shrink-0 flex flex-col items-center space-y-1 group">
+                  <div 
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 ${
+                      isSelected 
+                        ? 'shadow-lg scale-105' 
+                        : 'group-hover:scale-105 group-hover:shadow-md'
+                    }`}
+                    style={{ 
+                      backgroundColor: isSelected ? categoryColor : `${categoryColor}20`,
+                      borderWidth: isSelected ? '2px' : '1px',
+                      borderColor: categoryColor,
+                      borderStyle: 'solid'
+                    }}
+                  >
+                    <IconComponent 
+                      className="w-5 h-5" 
+                      style={{ 
+                        color: isSelected ? 'white' : categoryColor,
+                        filter: isSelected ? 'none' : 'opacity(0.8)'
+                      }} 
+                    />
                   </div>
-                  <span className="text-xs text-gray-700 text-center w-12 truncate">
+                  <span className={`text-xs text-center w-14 truncate transition-colors ${
+                    isSelected ? 'text-gray-900 font-medium' : 'text-gray-700'
+                  }`}>
                     {category.name_uz}
                   </span>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
@@ -76,15 +112,26 @@ function Categories() {
 }
 
 function AdBanner() {
+  const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const { data: ads } = useQuery({
     queryKey: ['/api/ads'],
+  });
+
+  // Auto rotate ads every 3 seconds
+  useState(() => {
+    if (ads && ads.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentAdIndex(prev => (prev + 1) % ads.length);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
   });
 
   if (!ads || ads.length === 0) {
     return null;
   }
 
-  const ad = ads[0];
+  const ad = ads[currentAdIndex];
 
   const handleAdClick = () => {
     if (ad.link_url) {
