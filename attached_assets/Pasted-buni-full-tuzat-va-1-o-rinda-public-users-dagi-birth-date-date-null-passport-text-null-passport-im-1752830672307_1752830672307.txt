@@ -1,0 +1,23 @@
+buni full tuzat va 1-o'rinda public.users dagi birth_date date null,
+passport text null,
+passport_image text null, passport_series text null,
+passport_number text null,
+passport_issued_by text null,
+passport_issued_date timestamp without time zone null,
+ustunlarini data_users jadvalida alohida yarat va unda user_id(fkey with public.users(id)) ustuni ham bolsin. va bu malumotlar faqat adminlarda korinadi. va admin-panel ni alohida qilki yani telegram bot bu admin bolganida web app da shu /admin ga telegram web app korsatadi va unga kirilganida esa bunda umuman asosiy tizimga boglanmagan bolsin yani ikkala qismni ajrat. va admin panelda faqat email va parol orqali kiriladi va agarda telegram web app orqali kirilsa ham login bolsin, va bunda telefon va planshet va kompyuterlarda full responsive qil. lekin hozircha faqat bitta narsani qil yani bottom bar va top barni hajmlarini tenglashtir va bottom bar juda kichik bolib qolibdi. va bosh sahifadagi katagoriyalar ikonkalarini duotone usulida qil va rangli bolsin. va bosh sahifadagi katagoriyalardan biriga bosilsa, bunda katalog bolimiga otmasin shu bosh sahifada filter orqali shu katagoriyadagi barcha mahsulotlar chiqsin(sub katagoriyalardagi mahsulotlari ham), va buni har doim aralashib turadigan qil. va bosh sahifadagi mahsulotlardagi rasm korinmayapti tuzat, va reklamaga kelsa yani ad bannerni har 3 sekundda almashadigan qil yani jadvaldagi reklamalar korsatilsin.
+Xatolik: [plugin:runtime-error-plugin] onAddToCart is not a function
+/home/runner/workspace/client/src/components/product/product-detail-modal.tsx:114:7
+112| console.error('Error adding to cart:', error);
+113| // Fallback to original handler
+114| onAddToCart(product.id, quantity);
+| ^
+115| onClose();
+116| }
+keyingi error: Request URL
+https://3c29b4b5-f85b-4105-af56-86e0c91ab67f-00-1azj8yxz6lfx5.sisko.replit.dev/api/cart
+Request Method
+POST
+Status Code
+400 Bad Request
+{"message":""[object Object]" is not valid JSON"}
+va telegram orqali loginni toliq qil yani websaytga kirilganda telegram orqali kirish tugmasi chiqsin va unga bosilganida telegram dasturiga kiriladi va unda t.me/jamolstroybot?start_login_web={temp_token}&{timestampz}&{client_id} orqali kiriladi va bunda telegram botda agarda shu odam mavjud bolsa Ruxsat berish tugmasi chiqadi va unga bosilganida esa websaytga qaytishingiz mumkin deyilsin va bunda tagida web app ham bolsin(ixtiyoriy bosish), va websaytga qaytilganida esa avtomatik tarzda login qilingan bolsin. va full qil, buyurtma berish va savatcha boyicha xatoliklar mavjud tuzat. Full tuzatib yangi sql kodlarni ham ber
