@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['grammy']
-  },
+  serverExternalPackages: ['grammy'],
   images: {
     domains: ['images.unsplash.com', 'via.placeholder.com'],
     remotePatterns: [
