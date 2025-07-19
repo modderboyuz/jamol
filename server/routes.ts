@@ -1,5 +1,4 @@
 import type { Express, Request, Response } from "express";
-import { createServer, type Server } from "http";
 import { storage } from "./supabase-storage";
 import { supabase } from "./db";
 import crypto from "crypto";
@@ -18,7 +17,7 @@ interface AuthRequest extends Request {
   user?: any;
 }
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express): Promise<void> {
   // Telegram webhook setup
   if (process.env.TELEGRAM_BOT_TOKEN) {
     try {
@@ -836,6 +835,5 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const httpServer = createServer(app);
-  return httpServer;
+  return;
 }

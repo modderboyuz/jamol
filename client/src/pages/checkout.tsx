@@ -109,7 +109,7 @@ export default function Checkout() {
   // Place order
   const placeOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
-      const response = await fetch('/api/orders', {
+      const response = await fetch(`${config.apiUrl}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -122,7 +122,7 @@ export default function Checkout() {
         throw new Error('Buyurtma berishda xatolik');
       }
       
-      return response.json();
+        body: JSON.stringify(data),
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
@@ -206,6 +206,10 @@ export default function Checkout() {
     }
 
     const orderData = {
+      items: cartItems.map(item => ({
+        productId: item.product_id,
+        quantity: item.quantity
+      })),
       total_amount: getTotalAmount(),
       delivery_amount: getTotalDeliveryAmount(),
       is_delivery: isDelivery,
@@ -213,6 +217,8 @@ export default function Checkout() {
       delivery_latitude: currentLocation?.lat || null,
       delivery_longitude: currentLocation?.lng || null,
       status: 'pending',
+      customer_name: `${user?.first_name} ${user?.last_name}`,
+      customer_phone: user?.phone || '',
     };
 
     placeOrderMutation.mutate(orderData);

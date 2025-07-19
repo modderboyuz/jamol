@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Package } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { config } from "@/lib/config";
 import type { CartItem, Product } from "@shared/schema";
 
 interface CartBarProps {
@@ -17,7 +18,7 @@ export function CartBar({ onOrderClick }: CartBarProps) {
     queryKey: ['/api/cart'],
     enabled: !!user,
     queryFn: async () => {
-      const response = await fetch('/api/cart', {
+      const response = await fetch(`${config.apiUrl}/api/cart`, {
         headers: {
           'x-telegram-id': user?.telegram_id?.toString() || '',
         },

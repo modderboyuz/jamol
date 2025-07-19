@@ -104,7 +104,7 @@ function WorkerDetailModal({ worker, isOpen, onClose }: {
     mutationFn: (reviewData: { rating: number; comment: string }) =>
       apiRequest(`/api/workers/${worker!.id}/reviews`, {
         method: 'POST',
-        body: reviewData,
+        body: JSON.stringify(reviewData),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/workers/${worker!.id}/reviews`] });
@@ -129,7 +129,7 @@ function WorkerDetailModal({ worker, isOpen, onClose }: {
     mutationFn: (applicationData: { worker_id: string; description: string; budget?: string }) =>
       apiRequest('/api/worker-applications', {
         method: 'POST',
-        body: applicationData,
+        body: JSON.stringify(applicationData),
       }),
     onSuccess: () => {
       toast({

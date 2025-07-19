@@ -2,7 +2,8 @@ import * as React from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
-import type { AuthUser } from "@/lib/supabase";
+import type { AuthUser } from "@/lib/auth";
+import { config } from "@/lib/config";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -21,7 +22,7 @@ export function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps) {
       // For now, we'll simulate the flow
 
       // Open Telegram bot link
-      const botUsername = "jalolmetalbot"; // Replace with actual bot username
+      const botUsername = config.telegram.botUsername;
       const telegramUrl = `https://t.me/${botUsername}?start=login`;
 
       // Open in new window/tab

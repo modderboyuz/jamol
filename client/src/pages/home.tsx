@@ -128,7 +128,7 @@ function AllProducts() {
     mutationFn: (data: { product_id: string; quantity: number }) =>
       apiRequest('/api/cart', {
         method: 'POST',
-        body: data,
+        body: JSON.stringify(data),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });

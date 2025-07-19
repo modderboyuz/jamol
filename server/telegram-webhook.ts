@@ -167,7 +167,9 @@ telegramRouter.post("/webhook/telegram", webhookCallback(bot, "express"));
 
 // Set webhook (call this once to setup)
 export async function setWebhook() {
-  const webhookUrl = `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://localhost:5000'}/webhook/telegram`;
+  const webhookUrl = process.env.NODE_ENV === 'production' 
+    ? `${process.env.VERCEL_URL || process.env.RAILWAY_STATIC_URL || 'https://your-backend.vercel.app'}/webhook/telegram`
+    : `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://localhost:5000'}/webhook/telegram`;
   
   try {
     await bot.api.setWebhook(webhookUrl);

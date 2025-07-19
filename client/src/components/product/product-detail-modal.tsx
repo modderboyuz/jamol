@@ -78,12 +78,12 @@ export function ProductDetailModal({
       const telegramId = localStorage.getItem('telegram_id');
       if (!telegramId) {
         console.error('No telegram ID found');
-        onAddToCart(product.id, quantity);
+        if (onAddToCart) onAddToCart(product.id, quantity);
         onClose();
         return;
       }
 
-      const response = await fetch('/api/cart', {
+      const response = await fetch(`${config.apiUrl}/api/cart`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,18 +100,18 @@ export function ProductDetailModal({
         import('@/lib/query-client').then(({ queryClient }) => {
           queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
         });
-        onAddToCart(product.id, quantity);
+        if (onAddToCart) onAddToCart(product.id, quantity);
         onClose(); // Close modal after successful add
       } else {
         console.error('Failed to add to cart');
         // Fallback to original handler
-        onAddToCart(product.id, quantity);
+        if (onAddToCart) onAddToCart(product.id, quantity);
         onClose();
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
       // Fallback to original handler
-      onAddToCart(product.id, quantity);
+      if (onAddToCart) onAddToCart(product.id, quantity);
       onClose();
     }
   };

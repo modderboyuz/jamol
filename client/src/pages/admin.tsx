@@ -88,7 +88,7 @@ export default function Admin() {
     mutationFn: ({ userId, switchedTo }: { userId: string; switchedTo: 'client' | 'admin' | null }) =>
       apiRequest(`/api/users/${userId}/switch-role`, {
         method: 'POST',
-        body: { switchedTo },
+        body: JSON.stringify({ switchedTo }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
