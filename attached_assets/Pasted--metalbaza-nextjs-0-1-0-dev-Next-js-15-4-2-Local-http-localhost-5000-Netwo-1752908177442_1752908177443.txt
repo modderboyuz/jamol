@@ -1,0 +1,58 @@
+> metalbaza-nextjs@0.1.0 dev
+   ▲ Next.js 15.4.2
+   - Local:        http://localhost:5000
+   - Network:      http://172.31.128.142:5000
+   - Experiments (use with caution):
+     · serverComponentsExternalPackages
+
+ ✓ Starting...
+ ⚠ Invalid next.config.js options detected: 
+ ⚠     Unrecognized key(s) in object: 'serverComponentsExternalPackages' at "experimental"
+ ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+ ⚠ `experimental.serverComponentsExternalPackages` has been moved to `serverExternalPackages`. Please update your next.config.js file accordingly.
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+ ✓ Ready in 11.9s
+ ○ Compiling / ...
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ⨯ ./src/components/ui/toast.tsx
+Module parse failed: Duplicate export 'Toast' (114:9)
+| ToastDescription.displayName = ToastPrimitives.Description.displayName;
+| export { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription, ToastClose, ToastAction,  };
+> export { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport };
+| var _c, _c1, _c2, _c3, _c4, _c5, _c6, _c7, _c8, _c9, _c10, _c11;
+| $RefreshReg$(_c, "ToastViewport$React.forwardRef");
+
+Import trace for requested module:
+./src/components/ui/toast.tsx
+./src/components/ui/toaster.tsx
+ ⨯ ./src/components/ui/toast.tsx
+Module parse failed: Duplicate export 'Toast' (114:9)
+| ToastDescription.displayName = ToastPrimitives.Description.displayName;
+| export { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription, ToastClose, ToastAction,  };
+> export { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport };
+| var _c, _c1, _c2, _c3, _c4, _c5, _c6, _c7, _c8, _c9, _c10, _c11;
+| $RefreshReg$(_c, "ToastViewport$React.forwardRef");
+
+Import trace for requested module:
+./src/components/ui/toast.tsx
+./src/components/ui/toaster.tsx
+ ⨯ ./src/components/ui/toast.tsx
+Module parse failed: Duplicate export 'Toast' (114:9)
+| ToastDescription.displayName = ToastPrimitives.Description.displayName;
+| export { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription, ToastClose, ToastAction,  };
+> export { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport };
+| var _c, _c1, _c2, _c3, _c4, _c5, _c6, _c7, _c8, _c9, _c10, _c11;
+| $RefreshReg$(_c, "ToastViewport$React.forwardRef");
+
+Import trace for requested module:
+./src/components/ui/toast.tsx
+./src/components/ui/toaster.tsx
+ GET / 500 in 30805ms
+ ⚠ Cross origin request detected from 6eaec7a4-7f57-4460-acb4-5279f10cdd28-00-g2qeh4wto3si.sisko.replit.dev to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
