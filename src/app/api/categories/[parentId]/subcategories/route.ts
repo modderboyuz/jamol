@@ -3,14 +3,15 @@ import { supabase } from '@/lib/supabase';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { parentId: string } }
+  { params }: { params: Promise<{ parentId: string }> }
 ) {
   try {
+    const { parentId } = await params;
     const { data, error } = await supabase
       .from('categories')
       .select('*')
       .eq('is_active', true)
-      .eq('parent_id', params.parentId)
+      .eq('parent_id', parentId)
       .order('order_index');
     
     if (error) throw error;

@@ -107,7 +107,7 @@ export function useTelegram() {
   }, []);
 
   const isTelegramWebApp = () => {
-    return !!window.Telegram?.WebApp?.initData;
+    return typeof window !== 'undefined' && !!window.Telegram?.WebApp?.initData;
   };
 
   return {
