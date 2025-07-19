@@ -2,7 +2,11 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
-  content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
+  content: [
+    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
   theme: {
     extend: {
       borderRadius: {
@@ -61,6 +65,36 @@ export default {
           border: "var(--sidebar-border)",
           ring: "var(--sidebar-ring)",
         },
+        // Untitled UI Gray Scale
+        gray: {
+          25: "hsl(220, 14%, 96%)",
+          50: "hsl(220, 9%, 89%)",
+          100: "hsl(220, 8%, 80%)",
+          200: "hsl(220, 5%, 70%)",
+          300: "hsl(220, 4%, 58%)",
+          400: "hsl(220, 3%, 46%)",
+          500: "hsl(220, 1%, 36%)",
+          600: "hsl(220, 1%, 26%)",
+          700: "hsl(220, 2%, 20%)",
+          800: "hsl(220, 3%, 16%)",
+          900: "hsl(220, 6%, 10%)",
+          950: "hsl(220, 13%, 5%)",
+        },
+        // Brand colors
+        brand: {
+          25: "hsl(220, 43%, 99%)",
+          50: "hsl(220, 38%, 97%)",
+          100: "hsl(220, 35%, 94%)",
+          200: "hsl(220, 27%, 84%)",
+          300: "hsl(220, 20%, 65%)",
+          400: "hsl(220, 13%, 46%)",
+          500: "hsl(220, 9%, 30%)",
+          600: "hsl(220, 9%, 20%)",
+          700: "hsl(220, 9%, 15%)",
+          800: "hsl(220, 9%, 10%)",
+          900: "hsl(220, 9%, 6%)",
+          950: "hsl(220, 13%, 4%)",
+        },
       },
       keyframes: {
         "accordion-down": {
@@ -86,5 +120,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
+  plugins: [require("tailwindcss-animate")],
 } satisfies Config;
