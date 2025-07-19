@@ -25,16 +25,6 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/products/route.js"
-    ],
-    "/catalog/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/catalog/page.js"
-    ],
-    "/api/categories/[parentId]/subcategories/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/categories/[parentId]/subcategories/route.js"
     ]
   }
 }

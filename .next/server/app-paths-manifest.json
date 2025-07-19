@@ -1,6 +1,6 @@
 {
-  "/api/categories/[parentId]/subcategories/route": "app/api/categories/[parentId]/subcategories/route.js",
+  "/api/categories/route": "app/api/categories/route.js",
+  "/api/ads/route": "app/api/ads/route.js",
   "/api/products/route": "app/api/products/route.js",
-  "/page": "app/page.js",
-  "/catalog/page": "app/catalog/page.js"
+  "/page": "app/page.js"
 }
