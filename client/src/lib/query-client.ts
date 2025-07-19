@@ -38,4 +38,3 @@ export async function apiRequest(url: string, options: RequestInit = {}) {
 
   return res.json();
 }
-  
