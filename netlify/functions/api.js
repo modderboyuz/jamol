@@ -1,7 +1,7 @@
 
-const express = require('express');
-const serverless = require('serverless-http');
-const { createClient } = require('@supabase/supabase-js');
+import express from 'express';
+import serverless from 'serverless-http';
+import { createClient } from '@supabase/supabase-js';
 
 const app = express();
 
@@ -36,6 +36,11 @@ const requireAuth = (req, res, next) => {
   req.telegramId = telegramId;
   next();
 };
+
+// Test endpoint
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Netlify function is working!' });
+});
 
 // Categories routes
 app.get('/api/categories', async (req, res) => {
@@ -329,4 +334,4 @@ app.get('/api/company-settings', async (req, res) => {
 });
 
 // Export the serverless function
-module.exports.handler = serverless(app);
+export const handler = serverless(app);
