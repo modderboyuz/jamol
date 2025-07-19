@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { config } from '@/lib/config';
 import { 
   MapPin, 
   User, 
@@ -122,7 +123,7 @@ export default function Checkout() {
         throw new Error('Buyurtma berishda xatolik');
       }
       
-        body: JSON.stringify(data),
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
