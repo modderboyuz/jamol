@@ -1,4 +1,4 @@
-import { db } from './db.js';
+import { db } from './db';
 import { eq, and, desc, ilike, or, isNull, sql } from "drizzle-orm";
 import { 
   users, 
@@ -28,7 +28,7 @@ import {
   type WorkerApplication,
   type InsertWorkerApplication,
   insertCartItemSchema
-} from "../shared/schema.js";
+} from "@shared/schema";
 
 export interface IStorage {
   // Users

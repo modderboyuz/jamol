@@ -1,0 +1,74 @@
+8:54:07 AM [express] GET /api/products 304 in 418ms :: [{"id":"3acef2c9-4dbd-47c3-8f85-09fde0248c68"…
+8:56:08 AM [express] GET /api/products 200 in 607ms :: [{"id":"c930c61a-ba04-4301-8c5f-32da3e52c67e"…
+Supabase error: {
+  code: 'PGRST201',
+  details: [
+    {
+      cardinality: 'one-to-many',
+      embedding: 'users with worker_reviews',
+      relationship: 'worker_reviews_client_id_fkey using users(id) and worker_reviews(client_id)'
+    },
+    {
+      cardinality: 'one-to-many',
+      embedding: 'users with worker_reviews',
+      relationship: 'worker_reviews_worker_id_fkey using users(id) and worker_reviews(worker_id)'
+    }
+  ],
+  hint: "Try changing 'worker_reviews' to one of the following: 'worker_reviews!worker_reviews_client_id_fkey', 'worker_reviews!worker_reviews_worker_id_fkey'. Find the desired relationship in the 'details' key.",
+  message: "Could not embed because more than one relationship was found for 'users' and 'worker_reviews'"
+}
+Workers API error: {
+  code: 'PGRST201',
+  details: [
+    {
+      cardinality: 'one-to-many',
+      embedding: 'users with worker_reviews',
+      relationship: 'worker_reviews_client_id_fkey using users(id) and worker_reviews(client_id)'
+    },
+    {
+      cardinality: 'one-to-many',
+      embedding: 'users with worker_reviews',
+      relationship: 'worker_reviews_worker_id_fkey using users(id) and worker_reviews(worker_id)'
+    }
+  ],
+  hint: "Try changing 'worker_reviews' to one of the following: 'worker_reviews!worker_reviews_client_id_fkey', 'worker_reviews!worker_reviews_worker_id_fkey'. Find the desired relationship in the 'details' key.",
+  message: "Could not embed because more than one relationship was found for 'users' and 'worker_reviews'"
+}
+8:56:12 AM [express] GET /api/workers 500 in 321ms :: {"error":"Ustalarni olishda xatolik"}
+Supabase error: {
+  code: 'PGRST201',
+  details: [
+    {
+      cardinality: 'one-to-many',
+      embedding: 'users with worker_reviews',
+      relationship: 'worker_reviews_client_id_fkey using users(id) and worker_reviews(client_id)'
+    },
+    {
+      cardinality: 'one-to-many',
+      embedding: 'users with worker_reviews',
+      relationship: 'worker_reviews_worker_id_fkey using users(id) and worker_reviews(worker_id)'
+    }
+  ],
+  hint: "Try changing 'worker_reviews' to one of the following: 'worker_reviews!worker_reviews_client_id_fkey', 'worker_reviews!worker_reviews_worker_id_fkey'. Find the desired relationship in the 'details' key.",
+  message: "Could not embed because more than one relationship was found for 'users' and 'worker_reviews'"
+}
+Workers API error: {
+  code: 'PGRST201',
+  details: [
+    {
+      cardinality: 'one-to-many',
+      embedding: 'users with worker_reviews',
+      relationship: 'worker_reviews_client_id_fkey using users(id) and worker_reviews(client_id)'
+    },
+    {
+      cardinality: 'one-to-many',
+      embedding: 'users with worker_reviews',
+      relationship: 'worker_reviews_worker_id_fkey using users(id) and worker_reviews(worker_id)'
+    }
+  ],
+  hint: "Try changing 'worker_reviews' to one of the following: 'worker_reviews!worker_reviews_client_id_fkey', 'worker_reviews!worker_reviews_worker_id_fkey'. Find the desired relationship in the 'details' key.",
+  message: "Could not embed because more than one relationship was found for 'users' and 'worker_reviews'"
+}
+8:56:14 AM [express] GET /api/workers 500 in 242ms :: {"error":"Ustalarni olishda xatolik"}
+8:58:01 AM [express] GET /api/categories/c583641d-6772-46c7-89ad-354c09b00e93/subcategories 200 in 4…
+8:58:01 AM [express] GET /api/products 200 in 241ms :: []

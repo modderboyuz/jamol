@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { authService, type AuthUser } from "@/lib/auth.js";
+import { authService, type AuthUser } from "@/lib/auth";
 import { useTelegram } from "@/hooks/use-telegram";
 
 interface AuthContextType {

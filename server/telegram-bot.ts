@@ -1,7 +1,7 @@
 import { Bot, Context, session } from "grammy";
 import { conversations, createConversation } from "@grammyjs/conversations";
-import { storage } from "./storage.js";
-import type { InsertUser } from "../shared/schema.js";
+import { storage } from "./storage";
+import type { InsertUser } from "@shared/schema";
 
 const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN || "dummy_token");
 

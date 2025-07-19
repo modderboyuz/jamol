@@ -1,224 +1,318 @@
-import { pgTable, text, serial, integer, boolean, decimal, timestamp, uuid, bigint, date } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Work types table for worker specializations
-export const workTypes = pgTable("work_types", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name_uz: text("name_uz").notNull(),
-  name_ru: text("name_ru").notNull(),
-  description: text("description"),
-  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+// Work types
+export interface WorkType {
+  id: string;
+  name_uz: string;
+  name_ru: string;
+  description?: string;
+  created_at: string;
+}
+
+// Users
+export interface User {
+  id: string;
+  phone: string;
+  first_name: string;
+  last_name: string;
+  telegram_username?: string;
+  telegram_id?: number;
+  role: 'client' | 'worker' | 'admin';
+  type: 'telegram' | 'google';
+  switched_to?: 'client' | 'admin';
+  birth_date?: string;
+  passport?: string;
+  passport_image?: string;
+  profile_image?: string;
+  work_type?: string;
+  description?: string;
+  average_pay?: number;
+  address?: string;
+  delivery_address?: string;
+  delivery_latitude?: string;
+  delivery_longitude?: string;
+  email?: string;
+  passport_series?: string;
+  passport_number?: string;
+  passport_issued_by?: string;
+  passport_issued_date?: string;
+  specialization?: string;
+  experience_years?: number;
+  hourly_rate?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Categories
+export interface Category {
+  id: string;
+  name_uz: string;
+  name_ru?: string;
+  icon?: string;
+  parent_id?: string;
+  order_index?: number;
+  is_active?: boolean;
+  created_at: string;
+}
+
+// Subcategories (same structure as categories but with parent_id)
+export interface Subcategory extends Category {
+  parent_id: string;
+}
+
+// Products
+export interface Product {
+  id: string;
+  name_uz: string;
+  name_ru?: string;
+  description_uz?: string;
+  description_ru?: string;
+  price: string;
+  category_id?: string;
+  image_url?: string;
+  is_available?: boolean;
+  is_rental?: boolean;
+  unit?: string;
+  delivery_price?: string;
+  free_delivery_threshold?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Orders
+export interface Order {
+  id: string;
+  user_id?: string;
+  total_amount: string;
+  delivery_amount?: string;
+  status: 'pending' | 'confirmed' | 'processing' | 'completed' | 'cancelled';
+  delivery_address?: string;
+  delivery_latitude?: string;
+  delivery_longitude?: string;
+  delivery_date?: string;
+  notes?: string;
+  is_delivery?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Order items
+export interface OrderItem {
+  id: string;
+  order_id?: string;
+  product_id?: string;
+  quantity: number;
+  price_per_unit: string;
+  total_price: string;
+  created_at: string;
+}
+
+// Ads
+export interface Ad {
+  id: string;
+  title_uz: string;
+  title_ru?: string;
+  description_uz?: string;
+  description_ru?: string;
+  image_url?: string;
+  link_url?: string;
+  is_active?: boolean;
+  start_date?: string;
+  end_date?: string;
+  created_at: string;
+}
+
+// Cart items
+export interface CartItem {
+  id: string;
+  user_id: string;
+  product_id: string;
+  quantity: number;
+  created_at: string;
+}
+
+// Company settings
+export interface CompanySettings {
+  id: string;
+  is_delivery: boolean;
+  company_name: string;
+  company_address?: string;
+  company_phone?: string;
+  company_email?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Worker applications
+export interface WorkerApplication {
+  id: string;
+  client_id: string;
+  worker_id: string;
+  title: string;
+  description: string;
+  location?: string;
+  location_latitude?: string;
+  location_longitude?: string;
+  budget?: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
+  urgency: 'low' | 'medium' | 'high';
+  contact_phone?: string;
+  preferred_date?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Insert schemas with Zod validation
+export const insertUserSchema = z.object({
+  phone: z.string().min(1),
+  first_name: z.string().min(1),
+  last_name: z.string().min(1),
+  telegram_username: z.string().optional(),
+  telegram_id: z.number().optional(),
+  role: z.enum(['client', 'worker', 'admin']).default('client'),
+  type: z.enum(['telegram', 'google']).default('telegram'),
+  switched_to: z.enum(['client', 'admin']).optional(),
+  birth_date: z.string().optional(),
+  passport: z.string().optional(),
+  passport_image: z.string().optional(),
+  profile_image: z.string().optional(),
+  work_type: z.string().optional(),
+  description: z.string().optional(),
+  average_pay: z.number().optional(),
+  address: z.string().optional(),
+  delivery_address: z.string().optional(),
+  delivery_latitude: z.string().optional(),
+  delivery_longitude: z.string().optional(),
+  email: z.string().optional(),
+  passport_series: z.string().optional(),
+  passport_number: z.string().optional(),
+  passport_issued_by: z.string().optional(),
+  passport_issued_date: z.string().optional(),
+  specialization: z.string().optional(),
+  experience_years: z.number().optional(),
+  hourly_rate: z.string().optional(),
 });
 
-export const users = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  phone: text("phone").unique().notNull(),
-  first_name: text("first_name").notNull(),
-  last_name: text("last_name").notNull(),
-  telegram_username: text("telegram_username"),
-  telegram_id: bigint("telegram_id", { mode: "number" }).unique(),
-  role: text("role", { enum: ["client", "worker", "admin"] }).default("client").notNull(),
-  type: text("type", { enum: ["telegram", "google"] }).default("telegram").notNull(),
-  switched_to: text("switched_to", { enum: ["client", "admin"] }), // For admin role switching
-  
-  // Optional fields for workers
-  birth_date: date("birth_date"),
-  passport: text("passport"),
-  passport_image: text("passport_image"),
-  profile_image: text("profile_image"),
-  work_type: uuid("work_type").references(() => workTypes.id),
-  description: text("description"),
-  average_pay: integer("average_pay"),
-  address: text("address"),
-  delivery_address: text("delivery_address"),
-  delivery_latitude: decimal("delivery_latitude", { precision: 10, scale: 8 }),
-  delivery_longitude: decimal("delivery_longitude", { precision: 11, scale: 8 }),
-  email: text("email"),
-  
-  // Legacy fields - keeping for compatibility
-  passport_series: text("passport_series"),
-  passport_number: text("passport_number"),
-  passport_issued_by: text("passport_issued_by"),
-  passport_issued_date: timestamp("passport_issued_date"),
-  specialization: text("specialization"), // For workers: what kind of work they do
-  experience_years: integer("experience_years"), // Work experience
-  hourly_rate: decimal("hourly_rate", { precision: 10, scale: 2 }), // Price per hour
-  
-  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+export const insertCategorySchema = z.object({
+  name_uz: z.string().min(1),
+  name_ru: z.string().optional(),
+  icon: z.string().optional(),
+  parent_id: z.string().optional(),
+  order_index: z.number().default(0),
+  is_active: z.boolean().default(true),
 });
 
-export const categories = pgTable("categories", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name_uz: text("name_uz").notNull(),
-  name_ru: text("name_ru"),
-  icon: text("icon"),
-  order_index: integer("order_index").default(0),
-  is_active: boolean("is_active").default(true),
-  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+export const insertProductSchema = z.object({
+  name_uz: z.string().min(1),
+  name_ru: z.string().optional(),
+  description_uz: z.string().optional(),
+  description_ru: z.string().optional(),
+  price: z.string(),
+  category_id: z.string().optional(),
+  image_url: z.string().optional(),
+  is_available: z.boolean().default(true),
+  is_rental: z.boolean().default(false),
+  unit: z.string().default('dona'),
+  delivery_price: z.string().default('0'),
+  free_delivery_threshold: z.string().default('0'),
 });
 
-export const products = pgTable("products", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name_uz: text("name_uz").notNull(),
-  name_ru: text("name_ru"),
-  description_uz: text("description_uz"),
-  description_ru: text("description_ru"),
-  price: decimal("price", { precision: 12, scale: 2 }).notNull(),
-  category_id: uuid("category_id").references(() => categories.id),
-  image_url: text("image_url"),
-  is_available: boolean("is_available").default(true),
-  is_rental: boolean("is_rental").default(false),
-  unit: text("unit").default("dona"),
-  delivery_price: decimal("delivery_price", { precision: 12, scale: 2 }).default("0").notNull(),
-  free_delivery_threshold: decimal("free_delivery_threshold", { precision: 12, scale: 2 }).default("0").notNull(),
-  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+export const insertOrderSchema = z.object({
+  user_id: z.string().optional(),
+  total_amount: z.string(),
+  delivery_amount: z.string().default('0'),
+  status: z.enum(['pending', 'confirmed', 'processing', 'completed', 'cancelled']).default('pending'),
+  delivery_address: z.string().optional(),
+  delivery_latitude: z.string().optional(),
+  delivery_longitude: z.string().optional(),
+  delivery_date: z.string().optional(),
+  notes: z.string().optional(),
+  is_delivery: z.boolean().default(false),
 });
 
-export const orders = pgTable("orders", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  user_id: uuid("user_id").references(() => users.id),
-  total_amount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
-  delivery_amount: decimal("delivery_amount", { precision: 12, scale: 2 }).default("0").notNull(),
-  status: text("status", { enum: ["pending", "confirmed", "processing", "completed", "cancelled"] }).default("pending").notNull(),
-  delivery_address: text("delivery_address"),
-  delivery_latitude: decimal("delivery_latitude", { precision: 10, scale: 8 }),
-  delivery_longitude: decimal("delivery_longitude", { precision: 11, scale: 8 }),
-  delivery_date: timestamp("delivery_date"),
-  notes: text("notes"),
-  is_delivery: boolean("is_delivery").default(false),
-  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+export const insertOrderItemSchema = z.object({
+  order_id: z.string().optional(),
+  product_id: z.string().optional(),
+  quantity: z.number().default(1),
+  price_per_unit: z.string(),
+  total_price: z.string(),
 });
 
-export const order_items = pgTable("order_items", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  order_id: uuid("order_id").references(() => orders.id, { onDelete: "cascade" }),
-  product_id: uuid("product_id").references(() => products.id),
-  quantity: integer("quantity").default(1).notNull(),
-  price_per_unit: decimal("price_per_unit", { precision: 12, scale: 2 }).notNull(),
-  total_price: decimal("total_price", { precision: 12, scale: 2 }).notNull(),
-  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+export const insertAdSchema = z.object({
+  title_uz: z.string().min(1),
+  title_ru: z.string().optional(),
+  description_uz: z.string().optional(),
+  description_ru: z.string().optional(),
+  image_url: z.string().optional(),
+  link_url: z.string().optional(),
+  is_active: z.boolean().default(true),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
 });
 
-export const ads = pgTable("ads", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  title_uz: text("title_uz").notNull(),
-  title_ru: text("title_ru"),
-  description_uz: text("description_uz"),
-  description_ru: text("description_ru"),
-  image_url: text("image_url"),
-  link_url: text("link_url"),
-  is_active: boolean("is_active").default(true),
-  start_date: timestamp("start_date"),
-  end_date: timestamp("end_date"),
-  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+export const insertWorkTypeSchema = z.object({
+  name_uz: z.string().min(1),
+  name_ru: z.string().min(1),
+  description: z.string().optional(),
 });
 
-export const cart_items = pgTable("cart_items", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  user_id: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  product_id: uuid("product_id").references(() => products.id, { onDelete: "cascade" }).notNull(),
-  quantity: integer("quantity").default(1).notNull(),
-  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+export const insertCartItemSchema = z.object({
+  user_id: z.string(),
+  product_id: z.string(),
+  quantity: z.number().default(1),
 });
 
-export const company_settings = pgTable("company_settings", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  is_delivery: boolean("is_delivery").default(false).notNull(),
-  company_name: text("company_name").default("MetalBaza").notNull(),
-  company_address: text("company_address"),
-  company_phone: text("company_phone"),
-  company_email: text("company_email"),
-  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+export const insertCompanySettingsSchema = z.object({
+  is_delivery: z.boolean().default(false),
+  company_name: z.string().default('MetalBaza'),
+  company_address: z.string().optional(),
+  company_phone: z.string().optional(),
+  company_email: z.string().optional(),
 });
 
-export const worker_applications = pgTable("worker_applications", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  client_id: uuid("client_id").references(() => users.id).notNull(),
-  worker_id: uuid("worker_id").references(() => users.id).notNull(),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  location: text("location"),
-  location_latitude: decimal("location_latitude", { precision: 10, scale: 8 }),
-  location_longitude: decimal("location_longitude", { precision: 11, scale: 8 }),
-  budget: decimal("budget", { precision: 12, scale: 2 }),
-  status: text("status", { enum: ["pending", "accepted", "rejected", "completed", "cancelled"] }).default("pending").notNull(),
-  urgency: text("urgency", { enum: ["low", "medium", "high"] }).default("medium").notNull(),
-  contact_phone: text("contact_phone"),
-  preferred_date: timestamp("preferred_date"),
-  notes: text("notes"),
-  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+export const insertWorkerApplicationSchema = z.object({
+  client_id: z.string(),
+  worker_id: z.string(),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  location: z.string().optional(),
+  location_latitude: z.string().optional(),
+  location_longitude: z.string().optional(),
+  budget: z.string().optional(),
+  status: z.enum(['pending', 'accepted', 'rejected', 'completed', 'cancelled']).default('pending'),
+  urgency: z.enum(['low', 'medium', 'high']).default('medium'),
+  contact_phone: z.string().optional(),
+  preferred_date: z.string().optional(),
+  notes: z.string().optional(),
 });
 
-// Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  created_at: true,
-  updated_at: true,
+// Worker Reviews interface
+export interface WorkerReview {
+  id: string;
+  worker_id: string;
+  client_id: string;
+  rating: number;
+  comment?: string;
+  created_at: string;
+}
+
+export const insertWorkerReviewSchema = z.object({
+  worker_id: z.string(),
+  client_id: z.string(),
+  rating: z.number().min(1).max(5),
+  comment: z.string().optional(),
 });
 
-export const insertCategorySchema = createInsertSchema(categories).omit({
-  id: true,
-  created_at: true,
-});
-
-export const insertProductSchema = createInsertSchema(products).omit({
-  id: true,
-  created_at: true,
-  updated_at: true,
-});
-
-export const insertOrderSchema = createInsertSchema(orders).omit({
-  id: true,
-  created_at: true,
-  updated_at: true,
-});
-
-export const insertOrderItemSchema = createInsertSchema(order_items).omit({
-  id: true,
-  created_at: true,
-});
-
-export const insertAdSchema = createInsertSchema(ads).omit({
-  id: true,
-  created_at: true,
-});
-
-export const insertWorkTypeSchema = createInsertSchema(workTypes).omit({
-  id: true,
-  created_at: true,
-});
-
-export const insertCartItemSchema = createInsertSchema(cart_items).omit({
-  id: true,
-  created_at: true,
-});
-
-export const insertCompanySettingsSchema = createInsertSchema(company_settings).omit({
-  id: true,
-  created_at: true,
-  updated_at: true,
-});
-
-export const insertWorkerApplicationSchema = createInsertSchema(worker_applications).omit({
-  id: true,
-  created_at: true,
-  updated_at: true,
-});
-
-// Types
-export type User = typeof users.$inferSelect;
-export type Category = typeof categories.$inferSelect;
-export type Product = typeof products.$inferSelect;
-export type Order = typeof orders.$inferSelect;
-export type OrderItem = typeof order_items.$inferSelect;
-export type Ad = typeof ads.$inferSelect;
-export type WorkType = typeof workTypes.$inferSelect;
-export type CartItem = typeof cart_items.$inferSelect;
-export type CompanySettings = typeof company_settings.$inferSelect;
-export type WorkerApplication = typeof worker_applications.$inferSelect;
+// Insert types
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+export type InsertAd = z.infer<typeof insertAdSchema>;
+export type InsertWorkType = z.infer<typeof insertWorkTypeSchema>;
+export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
+export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
+export type InsertWorkerApplication = z.infer<typeof insertWorkerApplicationSchema>;
+export type InsertWorkerReview = z.infer<typeof insertWorkerReviewSchema>;
